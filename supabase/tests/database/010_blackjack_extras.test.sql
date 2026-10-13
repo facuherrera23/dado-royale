@@ -6,7 +6,7 @@ select plan(15);
 insert into auth.users (id, email, raw_user_meta_data, aud, role, email_confirmed_at, created_at, updated_at)
 values ('c0010001-0000-0000-0000-000000000001', 'x1@test.dev', '{"username":"blackx1"}', 'authenticated', 'authenticated', now(), now(), now()),
        ('c0010002-0000-0000-0000-000000000002', 'x2@test.dev', '{"username":"blackx2"}', 'authenticated', 'authenticated', now(), now(), now());
-update public.wallets set balance = 5000 where user_id::text like 'c0010%';
+update public.wallets set balance = 5000 where user_id::text like 'c0010%'; update public.profiles set kyc_verified = true where username like 'blackx%';
 insert into public.table_players (table_id, user_id, status, pending_bet)
 select t.id, 'c0010001-0000-0000-0000-000000000001', 'seated', 50
   from public.tables t where t.name = 'Blackjack Bronce';

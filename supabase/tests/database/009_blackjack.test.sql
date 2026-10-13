@@ -7,6 +7,7 @@ insert into auth.users (id, email, raw_user_meta_data, aud, role, email_confirme
 values ('beeeeee1-0000-0000-0000-000000000001', 'b1@test.dev', '{"username":"black1"}', 'authenticated', 'authenticated', now(), now(), now()),
        ('beeeeee2-0000-0000-0000-000000000002', 'b2@test.dev', '{"username":"black2"}', 'authenticated', 'authenticated', now(), now(), now());
 update public.wallets set balance = 5000 where user_id::text like 'beeeeee%';
+update public.profiles set kyc_verified = true where username in ('black1','black2');
 insert into public.table_players (table_id, user_id, status)
 select t.id, u.x, 'seated' from public.tables t,
   (values ('beeeeee1-0000-0000-0000-000000000001'::uuid), ('beeeeee2-0000-0000-0000-000000000002'::uuid)) as u(x)

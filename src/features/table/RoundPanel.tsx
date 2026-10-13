@@ -4,12 +4,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 import { useAuth } from '@/features/auth/useAuth';
 import { useConfig } from '@/lib/useConfig';
-import { playDice, playLose, playWin } from '@/lib/sounds';
+import { playCard, playDice, playLose, playWin } from '@/lib/sounds';
 
 import { Card } from './Card';
 import { Dice } from './Dice';
 import { ChipsBurst } from './ChipsBurst';
 import { BlackjackPanel } from './BlackjackPanel';
+import { RpsPanel } from './RpsPanel';
 import { useCancelRound, useRollRound, type Round, type RoundPlayer } from './useRound';
 
 interface Props {
@@ -27,7 +28,6 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
   const { user } = useAuth();
   const { data: config } = useConfig();
   const houseFeePct = config?.get('house_fee_percent') ?? 4;
-  const isPoker = game === 'poker';
   const round = data.round;
 
   // Sonido + animación al terminar la ronda (hooks antes de cualquier return)
@@ -43,11 +43,14 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
   if (game === 'blackjack') {
     return <BlackjackPanel tableId={tableId} data={data} seated={seated} />;
   }
+  if (game === 'rps') {
+    return <RpsPanel tableId={tableId} data={data} seated={seated} />;
+  }
   if (!round) return null;
 
   const players = data.players;
   const me = players.find((p) => p.user_id === user?.id);
-  const played = (p: RoundPlayer) => (isPoker ? p.card1 !== null : p.dice1 !== null);
+  const played = (p: RoundPlayer) => (game === 'dice' ? p.dice1 !== null : p.card1 !== null);
   const iMustRoll = !!me && !played(me);
   const waitingFor = players.filter((p) => !played(p));
   const rolling = round.status === 'in_progress' && waitingFor.length > 0;
@@ -59,7 +62,8 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
     <section className="rounded-xl border border-casino-gold/40 bg-casino-surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">
-          Ronda en curso <span aria-hidden>{isPoker ? '🃏' : '🎲'}</span>
+          Ronda en curso{' '}
+          <span aria-hidden>{game === 'dice' ? '🎲' : game === 'war' ? '🗡️' : '🃏'}</span>
         </h2>
         <p className="text-sm text-casino-muted">
           Pozo: <strong className="text-casino-gold">{round.pot.toLocaleString('es')} 🪙</strong>
@@ -106,7 +110,8 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
           className="mt-4 rounded-lg border border-casino-gold/40 bg-casino-gold/10 p-3 text-sm text-casino-gold"
           role="status"
         >
-          ⚔️ ¡Empate! Solo los empatados {isPoker ? 'reciben cartas nuevas' : 'vuelven a lanzar'}.
+          ⚔️ ¡Empate! Solo los empatados{' '}
+          {game === 'dice' ? 'vuelven a lanzar' : 'reciben cartas nuevas'}.
         </p>
       )}
 
@@ -129,24 +134,30 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
               </p>
               <p className="text-sm text-casino-muted">
                 {!played(p)
-                  ? isPoker
-                    ? 'Aún no tiene cartas'
-                    : 'Aún no ha lanzado'
-                  : isPoker
-                    ? handLabel(p.card1, p.card2)
-                    : `Total: ${String(p.total)}`}
+                  ? game === 'dice'
+                    ? 'Aún no ha lanzado'
+                    : game === 'war'
+                      ? 'Aún no tiene carta'
+                      : 'Aún no tiene cartas'
+                  : game === 'dice'
+                    ? `Total: ${String(p.total)}`
+                    : game === 'war'
+                      ? 'Carta revelada'
+                      : handLabel(p.card1, p.card2)}
               </p>
             </div>
             <div className="flex gap-2">
-              {isPoker ? (
-                <>
-                  <Card value={p.card1} label="1" />
-                  <Card value={p.card2} label="2" />
-                </>
-              ) : (
+              {game === 'dice' ? (
                 <>
                   <Dice value={p.dice1} label="1" />
                   <Dice value={p.dice2} label="2" />
+                </>
+              ) : game === 'war' ? (
+                <Card value={p.card1} label="1" />
+              ) : (
+                <>
+                  <Card value={p.card1} label="1" />
+                  <Card value={p.card2} label="2" />
                 </>
               )}
             </div>
@@ -157,7 +168,7 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
       {rolling && seated && (
         <div className="mt-6 flex flex-col items-start gap-3">
           {iMustRoll ? (
-            <RollButton {...{ tableId, roundId: round.id, isPoker }} />
+            <RollButton {...{ tableId, roundId: round.id, game }} />
           ) : (
             <p className="text-sm text-casino-muted">
               Ya jugaste. Esperando a{' '}
@@ -189,30 +200,33 @@ function handLabel(c1: number | null, c2: number | null): string {
 function RollButton({
   tableId,
   roundId,
-  isPoker,
+  game,
 }: {
   tableId: string;
   roundId: string;
-  isPoker: boolean;
+  game: string;
 }) {
   const roll = useRollRound(tableId);
+  const label =
+    game === 'dice' ? '🎲 Tirando…' : game === 'war' ? '🗡️ Robando…' : '🃏 Repartiendo…';
+  const labelIdle =
+    game === 'dice'
+      ? '🎲 ¡Tirar mis dados!'
+      : game === 'war'
+        ? '🗡️ ¡Robar mi carta!'
+        : '🃏 ¡Repartir mis cartas!';
   return (
     <>
       <button
         onClick={() => {
-          playDice();
+          if (game === 'dice') playDice();
+          else playCard();
           roll.mutate(roundId);
         }}
         disabled={roll.isPending}
         className="rounded-lg bg-casino-gold px-8 py-3 text-lg font-bold text-black shadow-lg transition-transform enabled:hover:scale-105 disabled:opacity-50"
       >
-        {roll.isPending
-          ? isPoker
-            ? '🃏 Repartiendo…'
-            : '🎲 Tirando…'
-          : isPoker
-            ? '🃏 ¡Repartir mis cartas!'
-            : '🎲 ¡Tirar mis dados!'}
+        {roll.isPending ? label : labelIdle}
       </button>
       {roll.isError && (
         <p role="alert" className="text-sm text-casino-red">

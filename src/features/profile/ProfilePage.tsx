@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -85,6 +86,27 @@ export function ProfilePage() {
       </section>
 
       <StatsSection />
+
+      <section className="rounded-xl border border-casino-border bg-casino-surface p-6">
+        <h2 className="text-lg font-semibold">Verificación de identidad</h2>
+        {profile.kyc_verified ? (
+          <p className="mt-3 text-sm text-casino-green">
+            ✅ Identidad verificada ({profile.country ?? '—'})
+          </p>
+        ) : (
+          <div className="mt-3 flex flex-col gap-3">
+            <p className="text-sm text-casino-muted">
+              Aún no has verificado tu identidad (18+). Sin KYC no podrás sentarte en mesas.
+            </p>
+            <Link
+              to="/verificacion"
+              className="w-fit rounded-md bg-casino-gold px-4 py-2 text-sm font-semibold text-black"
+            >
+              Verificar ahora →
+            </Link>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

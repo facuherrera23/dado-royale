@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { AuthPage } from '@/features/auth/AuthPage';
-import { RedirectIfAuthed, RequireAuth } from '@/features/auth/guards';
+import { RedirectIfAuthed, RequireAuth, RequireKyc } from '@/features/auth/guards';
 import { useAuthSync } from '@/features/auth/useAuth';
 import { LobbyPage } from '@/features/lobby/LobbyPage';
 
@@ -28,6 +28,9 @@ const TermsPage = lazy(async () => ({
 }));
 const ProfilePage = lazy(async () => ({
   default: (await import('@/features/profile/ProfilePage')).ProfilePage,
+}));
+const KycPage = lazy(async () => ({
+  default: (await import('@/features/profile/KycPage')).KycPage,
 }));
 
 function PageFallback() {
@@ -68,12 +71,15 @@ export function App() {
             />
             <Route element={<RequireAuth />}>
               <Route element={<AppShell />}>
-                <Route path="/lobby" element={<LobbyPage />} />
-                <Route path="/mesa/:id" element={<TablePage />} />
-                <Route path="/wallet" element={<WalletPage />} />
-                <Route path="/ranking" element={<RankingPage />} />
                 <Route path="/perfil" element={<ProfilePage />} />
-                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/verificacion" element={<KycPage />} />
+                <Route element={<RequireKyc />}>
+                  <Route path="/lobby" element={<LobbyPage />} />
+                  <Route path="/mesa/:id" element={<TablePage />} />
+                  <Route path="/wallet" element={<WalletPage />} />
+                  <Route path="/ranking" element={<RankingPage />} />
+                  <Route path="/admin" element={<AdminPage />} />
+                </Route>
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/lobby" replace />} />

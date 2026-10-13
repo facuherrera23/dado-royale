@@ -19,6 +19,15 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
+/** Detrás del login: exige KYC verificado para jugar (el servidor también lo fuerza). */
+export function RequireKyc() {
+  const { profile } = useAuth();
+  if (profile && !profile.kyc_verified) {
+    return <Navigate to="/verificacion" replace />;
+  }
+  return <Outlet />;
+}
+
 /** Rutas públicas que redirigen al lobby si ya hay sesión. */
 export function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   const { isLoading, isAuthenticated } = useAuth();

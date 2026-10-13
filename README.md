@@ -57,7 +57,7 @@ El `.env` por defecto apunta al stack local (claves públicas del stack de desar
 
 ## Reglas del juego (motor SQL)
 
-**Tres juegos:** Dados (2d6), **Póker de 2 cartas** y **Blackjack (21) vs la banca**. La mesa define el juego (`tables.game`) y el lobby tiene selector 🎲/🃏/♠. Dados y póker comparten pozo, comisión del 4%, desempates (máx. 3) y reembolsos.
+**Cinco juegos:** 🎲 Dados (2d6), 🃏 Póker de 2 cartas, ♠ Blackjack (21 vs la banca), 🗡️ Guerra de cartas (1 carta, gana la más alta) y ✊ Piedra-Papel-Tijera (elección secreta en tabla oculta, piedra>tijeras>papel>piedra). Todos comparten pozo, comisión del 4% (PvP), desempates y reembolsos; blackjack no tiene comisión (la banca cobra las perdedoras).
 
 - **Dados:** 2d6 por jugador, generados en el servidor con `pgcrypto.gen_random_bytes` y **rejection sampling sin sesgo**. Nunca `random()`, nunca en el cliente.
 - **Póker 2 cartas:** baraja única de 52 por ronda (`draw_card` con muestreo uniforme criptográfico, **sin repetición**). Victoria: pareja > carta alta, con kicker (`hand_score`). Los empatados reciben cartas nuevas.
@@ -75,6 +75,8 @@ El `.env` por defecto apunta al stack local (claves públicas del stack de desar
 Config ajustable sin código en la tabla `config`: `house_fee_percent`, `faucet_amount`, `faucet_cooldown_hours`, `min_players`, `max_tiebreaks`, `join_cooldown_seconds`, `round_timeout_seconds`.
 
 ## Seguridad (checklist verificado por tests — `007_sec_audit.test.sql`)
+
+- **KYC (18+):** `submit_kyc` valida nombre completo, mayoría de edad y país ISO; el documento se guarda solo como hash SHA-256. `join_table`/`set_bet` exigen `kyc_verified` (código P0035): sin verificación no se puede jugar.
 
 1. ✅ El frontend solo usa la `anon key`; la `service_role` **no existe** en el repo ni en `VITE_*`.
 2. ✅ RLS activado en las 9 tablas; `wallets/ledger/rounds/round_players/table_players/tables/config/house_account` sin INSERT/UPDATE/DELETE para `authenticated`/`anon`.

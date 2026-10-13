@@ -8,7 +8,7 @@ values ('ccccccc1-0000-0000-0000-000000000001', 'g1@test.dev', '{"username":"jug
        ('ccccccc2-0000-0000-0000-000000000002', 'g2@test.dev', '{"username":"jug2"}', 'authenticated', 'authenticated', now(), now(), now()),
        ('ccccccc3-0000-0000-0000-000000000003', 'g3@test.dev', '{"username":"jug3"}', 'authenticated', 'authenticated', now(), now(), now()),
        ('ccccccc4-0000-0000-0000-000000000004', 'g4@test.dev', '{"username":"jug4"}', 'authenticated', 'authenticated', now(), now(), now());
-update public.wallets set balance = 100 where user_id::text like 'ccccccc%';
+update public.wallets set balance = 100 where user_id::text like 'ccccccc%'; update public.profiles set kyc_verified = true where username like 'jug_';
 
 -- Sentados directamente (fixture, no pasa por la RPC para aislar el test)
 insert into public.table_players (table_id, user_id, status)

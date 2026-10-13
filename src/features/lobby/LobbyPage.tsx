@@ -9,7 +9,7 @@ import { useTables } from './useTables';
  */
 export function LobbyPage() {
   const { data: tables, isLoading, isError, refetch } = useTables();
-  const [game, setGame] = useState<'dice' | 'poker' | 'blackjack'>('dice');
+  const [game, setGame] = useState<'dice' | 'poker' | 'blackjack' | 'war' | 'rps'>('dice');
   const [filter, setFilter] = useState<number | null>(null);
 
   const gameTables = useMemo(() => (tables ?? []).filter((t) => t.game === game), [tables, game]);
@@ -39,6 +39,8 @@ export function LobbyPage() {
             ['dice', '🎲 Dados'],
             ['poker', '🃏 Póker 2 cartas'],
             ['blackjack', '♠ Blackjack'],
+            ['war', '🗡️ Guerra'],
+            ['rps', '✊ Piedra Papel Tijera'],
           ] as const
         ).map(([g, label]) => (
           <button

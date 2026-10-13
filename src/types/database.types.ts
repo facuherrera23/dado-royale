@@ -115,23 +115,41 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null;
+          country: string | null;
           created_at: string;
+          date_of_birth: string | null;
+          doc_hash: string | null;
+          full_name: string | null;
           id: string;
           is_admin: boolean;
+          kyc_at: string | null;
+          kyc_verified: boolean;
           username: string;
         };
         Insert: {
           avatar_url?: string | null;
+          country?: string | null;
           created_at?: string;
+          date_of_birth?: string | null;
+          doc_hash?: string | null;
+          full_name?: string | null;
           id: string;
           is_admin?: boolean;
+          kyc_at?: string | null;
+          kyc_verified?: boolean;
           username: string;
         };
         Update: {
           avatar_url?: string | null;
+          country?: string | null;
           created_at?: string;
+          date_of_birth?: string | null;
+          doc_hash?: string | null;
+          full_name?: string | null;
           id?: string;
           is_admin?: boolean;
+          kyc_at?: string | null;
+          kyc_verified?: boolean;
           username?: string;
         };
         Relationships: [];
@@ -221,6 +239,42 @@ export type Database = {
           },
           {
             foreignKeyName: 'round_players_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      round_rps_choices: {
+        Row: {
+          choice: number;
+          round_id: string;
+          tiebreak_no: number;
+          user_id: string;
+        };
+        Insert: {
+          choice: number;
+          round_id: string;
+          tiebreak_no?: number;
+          user_id: string;
+        };
+        Update: {
+          choice?: number;
+          round_id?: string;
+          tiebreak_no?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'round_rps_choices_round_id_fkey';
+            columns: ['round_id'];
+            isOneToOne: false;
+            referencedRelation: 'rounds';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'round_rps_choices_user_id_fkey';
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
@@ -392,6 +446,7 @@ export type Database = {
     };
     Functions: {
       _roll_round_dice_poker: { Args: { p_round_id: string }; Returns: Json };
+      _roll_round_war: { Args: { p_round_id: string }; Returns: Json };
       _uniform: { Args: { p_max: number }; Returns: number };
       bj_action: {
         Args: { p_action: string; p_hand?: number; p_round_id: string };
@@ -422,8 +477,21 @@ export type Database = {
       leave_table: { Args: { p_table_id: string }; Returns: Json };
       roll_d6: { Args: never; Returns: number };
       roll_round: { Args: { p_round_id: string }; Returns: Json };
+      rps_play: {
+        Args: { p_choice: number; p_round_id: string };
+        Returns: Json;
+      };
       set_bet: { Args: { p_amount: number; p_table_id: string }; Returns: Json };
       start_round: { Args: { p_table_id: string }; Returns: Json };
+      submit_kyc: {
+        Args: {
+          p_country: string;
+          p_dob: string;
+          p_doc_id: string;
+          p_full_name: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       ledger_type:

@@ -9,6 +9,9 @@ values ('bbbbbbb1-0000-0000-0000-000000000001', 't1@test.dev', '{"username":"uno
        ('bbbbbbb3-0000-0000-0000-000000000003', 't3@test.dev', '{"username":"tres_test"}', 'authenticated', 'authenticated', now(), now(), now());
 
 update public.wallets set balance = 100 where user_id::text like 'bbbbbbb%';
+-- KYC verificado a true: el gate de join_table exige verificación
+update public.profiles set kyc_verified = true
+ where id in (select user_id from public.wallets where user_id::text like 'bbbbbbb%');
 
 -- Uno sin saldo: forzado en FASE de test (superusuario puede escribir wallet)
 update public.wallets set balance = 0 where user_id = 'bbbbbbb3-0000-0000-0000-000000000003';
