@@ -71,6 +71,7 @@ export function TablePage() {
           tableId={tableId}
           tableName={table.name}
           betAmount={table.bet_amount}
+          game={table.game}
           data={{ round: roundData.round, players: roundData.players }}
           seated={seated}
           seatedCount={seatedCount}

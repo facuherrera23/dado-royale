@@ -139,6 +139,8 @@ export type Database = {
       round_players: {
         Row: {
           bet_amount: number;
+          card1: number | null;
+          card2: number | null;
           dice1: number | null;
           dice2: number | null;
           is_winner: boolean;
@@ -149,6 +151,8 @@ export type Database = {
         };
         Insert: {
           bet_amount: number;
+          card1?: number | null;
+          card2?: number | null;
           dice1?: number | null;
           dice2?: number | null;
           is_winner?: boolean;
@@ -159,6 +163,8 @@ export type Database = {
         };
         Update: {
           bet_amount?: number;
+          card1?: number | null;
+          card2?: number | null;
           dice1?: number | null;
           dice2?: number | null;
           is_winner?: boolean;
@@ -281,6 +287,7 @@ export type Database = {
         Row: {
           bet_amount: number;
           created_at: string;
+          game: string;
           id: string;
           max_players: number;
           name: string;
@@ -289,6 +296,7 @@ export type Database = {
         Insert: {
           bet_amount: number;
           created_at?: string;
+          game?: string;
           id?: string;
           max_players: number;
           name: string;
@@ -297,6 +305,7 @@ export type Database = {
         Update: {
           bet_amount?: number;
           created_at?: string;
+          game?: string;
           id?: string;
           max_players?: number;
           name?: string;
@@ -335,9 +344,12 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _uniform: { Args: { p_max: number }; Returns: number };
       cancel_round: { Args: { p_round_id: string }; Returns: Json };
+      card_rank: { Args: { p_card: number }; Returns: number };
       claim_faucet: { Args: never; Returns: Json };
       config_int: { Args: { p_key: string }; Returns: number };
+      draw_card: { Args: { p_round: string }; Returns: number };
       get_admin_stats: { Args: never; Returns: Json };
       get_leaderboard: {
         Args: { p_limit?: number };
@@ -347,6 +359,7 @@ export type Database = {
           username: string;
         }[];
       };
+      hand_score: { Args: { p_c1: number; p_c2: number }; Returns: number };
       is_admin: { Args: { p_uid?: string }; Returns: boolean };
       join_table: { Args: { p_table_id: string }; Returns: Json };
       leave_table: { Args: { p_table_id: string }; Returns: Json };

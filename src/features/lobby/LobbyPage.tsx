@@ -9,60 +9,88 @@ import { useTables } from './useTables';
  */
 export function LobbyPage() {
   const { data: tables, isLoading, isError, refetch } = useTables();
+  const [game, setGame] = useState<'dice' | 'poker'>('dice');
   const [filter, setFilter] = useState<number | null>(null);
 
+  const gameTables = useMemo(() => (tables ?? []).filter((t) => t.game === game), [tables, game]);
   const betOptions = useMemo(
-    () => [...new Set((tables ?? []).map((t) => t.bet_amount))].sort((a, b) => a - b),
-    [tables],
+    () => [...new Set(gameTables.map((t) => t.bet_amount))].sort((a, b) => a - b),
+    [gameTables],
   );
   const filtered = useMemo(
-    () => (tables ?? []).filter((t) => filter === null || t.bet_amount === filter),
-    [tables, filter],
+    () => gameTables.filter((t) => filter === null || t.bet_amount === filter),
+    [gameTables, filter],
   );
 
   return (
     <main className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Lobby</h1>
-          <p className="mt-1 text-sm text-casino-muted">
-            Siéntate en una mesa. La apuesta se bloquea cuando comienza la ronda. Comisión de la
-            casa: 4% del pozo.
-          </p>
-        </div>
-        <div
-          className="flex flex-wrap items-center gap-2"
-          role="group"
-          aria-label="Filtrar por apuesta"
-        >
+      <div>
+        <h1 className="text-2xl font-bold">Lobby</h1>
+        <p className="mt-1 text-sm text-casino-muted">
+          Elige tu juego, siéntate en una mesa y juega contra otros jugadores. La apuesta se bloquea
+          cuando comienza la ronda. Comisión de la casa: 4% del pozo.
+        </p>
+      </div>
+
+      {/* Selector de juego */}
+      <div className="flex gap-3" role="tablist" aria-label="Elegir juego">
+        {(
+          [
+            ['dice', '🎲 Dados'],
+            ['poker', '🃏 Póker 2 cartas'],
+          ] as const
+        ).map(([g, label]) => (
           <button
+            key={g}
+            role="tab"
+            aria-selected={game === g}
             onClick={() => {
+              setGame(g);
               setFilter(null);
             }}
+            className={`flex-1 rounded-xl border-2 px-6 py-4 text-lg font-bold transition-colors ${
+              game === g
+                ? 'border-casino-gold bg-casino-gold/10 text-casino-gold'
+                : 'border-casino-border bg-casino-surface text-casino-muted hover:border-casino-gold/50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div
+        className="flex flex-wrap items-center gap-2"
+        role="group"
+        aria-label="Filtrar por apuesta"
+      >
+        <button
+          onClick={() => {
+            setFilter(null);
+          }}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+            filter === null
+              ? 'bg-casino-gold text-black'
+              : 'border border-casino-border text-casino-muted'
+          }`}
+        >
+          Todas
+        </button>
+        {betOptions.map((bet) => (
+          <button
+            key={bet}
+            onClick={() => {
+              setFilter(bet);
+            }}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-              filter === null
+              filter === bet
                 ? 'bg-casino-gold text-black'
                 : 'border border-casino-border text-casino-muted'
             }`}
           >
-            Todas
+            {bet} 🪙
           </button>
-          {betOptions.map((bet) => (
-            <button
-              key={bet}
-              onClick={() => {
-                setFilter(bet);
-              }}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                filter === bet
-                  ? 'bg-casino-gold text-black'
-                  : 'border border-casino-border text-casino-muted'
-              }`}
-            >
-              {bet} 🪙
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       {isLoading && <p className="animate-pulse text-casino-muted">Cargando mesas…</p>}
@@ -78,7 +106,7 @@ export function LobbyPage() {
         </div>
       )}
       {tables && filtered.length === 0 && (
-        <p className="text-casino-muted">No hay mesas con ese filtro.</p>
+        <p className="text-casino-muted">No hay mesas de este juego con ese filtro.</p>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
