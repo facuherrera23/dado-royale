@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+/* Tema oscuro tipo casino sobrio. Tokens definidos como utilidades de Tailwind v4. */
+@theme {
+  --color-casino-bg: #0d1117;
+  --color-casino-surface: #161b22;
+  --color-casino-border: #2d333b;
+  --color-casino-gold: #d4af37;
+  --color-casino-green: #2ea043;
+  --color-casino-red: #e5534b;
+  --color-casino-text: #e6edf3;
+  --color-casino-muted: #8b949e;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-casino-bg);
+  color: var(--color-casino-text);
+}
