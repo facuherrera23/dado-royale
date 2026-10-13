@@ -62,7 +62,7 @@ El `.env` por defecto apunta al stack local (claves públicas del stack de desar
 - **Dados:** 2d6 por jugador, generados en el servidor con `pgcrypto.gen_random_bytes` y **rejection sampling sin sesgo**. Nunca `random()`, nunca en el cliente.
 - **Póker 2 cartas:** baraja única de 52 por ronda (`draw_card` con muestreo uniforme criptográfico, **sin repetición**). Victoria: pareja > carta alta, con kicker (`hand_score`). Los empatados reciben cartas nuevas.
 - **Blackjack (21):** vs la banca, con **apuesta variable** (`set_bet` dentro del rango min–max de la mesa; solo entran en la mano los sentados con apuesta fijada). Acciones `bj_action(..., action, hand)`: **hit, stand, doblar** (×2, una carta y plantarse), **separar parejas** (crea una segunda mano con apuesta igual, balance suficiente exigido) y **seguro** (si la banca muestra As: la mitad de la apuesta, paga 2:1 si la banca tiene natural). Contabilidad: la stake siempre entra a la casa y cada payout/refund tiene su espejo negativo (`house_settlement`) → el ledger cuadra a 0. La banca **roba hasta 17**; natural paga 3:2; push = reembolso íntegro.
-- **Carta oculta de la banca:** la UI solo revela la primera carta hasta el final (los datos son públicos por Realtime; la cobertura real de la carta oculta es visual en esta versión — ver “Riesgos” más abajo).
+- **Carta oculta de la banca (real):** la segunda carta de la banca se guarda en `round_dealer_holes`, una tabla **sin ningún permiso para la API ni publicación en Realtime** (`SELECT` denegado 42501, verificado por test). Solo las funciones SECURITY DEFINER la tocan, y al liquidar la ronda la carta se funde en `rounds.dealer_cards` y el hueco se borra.
 - **Cron:** con `pg_cron`, `cancel_stale_rounds()` se ejecuta cada 5 minutos y reembolsa rondas atascadas sin actividad (si pg_cron no estuviera disponible, el mismo efecto lo da `cancel_round` tras el timeout).
 - **Inicio:** cualquier jugador sentado llama `start_round(table_id)`; con ≥ `min_players` (2) se crea la ronda y se bloquean las apuestas (`bet_lock`) de todos los sentados en **una sola transacción**. Una ronda por mesa.
 - **Resolución:** cada jugador tira sus dados con `roll_round(round_id)`; al completar todos: gana el total más alto.
@@ -106,6 +106,10 @@ Config ajustable sin código en la tabla `config`: `house_fee_percent`, `faucet_
    ```sql
    update public.profiles set is_admin = true where username = 'tu_usuario';
    ```
+8. **(Opcional) OAuth con Google:**
+   - Google Cloud Console → crea un OAuth Client ID tipo "Web" con redirect: `https://cjalkhrmuxndrozcwcmo.supabase.co/auth/v1/callback`
+   - Supabase → Authentication → Providers → **Google**: pega Client ID/Secret y actívalo.
+   - El botón "Continuar con Google" del login funcionará en cuanto esté configurado.
 
 ## Avisos legales
 
