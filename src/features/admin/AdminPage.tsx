@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/lib/supabaseClient';
 
+import { KycQueue } from './KycQueue';
+
 const adminStatsSchema = z.object({
   house_balance: z.number(),
   total_fees: z.number(),
@@ -75,6 +77,8 @@ export function AdminPage() {
   return (
     <main className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">🛡️ Administración</h1>
+
+      <KycQueue />
 
       {stats.data && (
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

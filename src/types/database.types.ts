@@ -64,6 +64,72 @@ export type Database = {
         };
         Relationships: [];
       };
+      kyc_submissions: {
+        Row: {
+          country: string;
+          created_at: string;
+          date_of_birth: string;
+          doc_hash: string;
+          doc_path_back: string | null;
+          doc_path_front: string;
+          doc_type: string;
+          full_name: string;
+          id: string;
+          rejection_reason: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          country: string;
+          created_at?: string;
+          date_of_birth: string;
+          doc_hash: string;
+          doc_path_back?: string | null;
+          doc_path_front: string;
+          doc_type: string;
+          full_name: string;
+          id?: string;
+          rejection_reason?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          country?: string;
+          created_at?: string;
+          date_of_birth?: string;
+          doc_hash?: string;
+          doc_path_back?: string | null;
+          doc_path_front?: string;
+          doc_type?: string;
+          full_name?: string;
+          id?: string;
+          rejection_reason?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'kyc_submissions_reviewed_by_fkey';
+            columns: ['reviewed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'kyc_submissions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       ledger: {
         Row: {
           amount: number;
@@ -123,6 +189,7 @@ export type Database = {
           id: string;
           is_admin: boolean;
           kyc_at: string | null;
+          kyc_status: string;
           kyc_verified: boolean;
           username: string;
         };
@@ -136,6 +203,7 @@ export type Database = {
           id: string;
           is_admin?: boolean;
           kyc_at?: string | null;
+          kyc_status?: string;
           kyc_verified?: boolean;
           username: string;
         };
@@ -149,6 +217,7 @@ export type Database = {
           id?: string;
           is_admin?: boolean;
           kyc_at?: string | null;
+          kyc_status?: string;
           kyc_verified?: boolean;
           username?: string;
         };
@@ -475,6 +544,10 @@ export type Database = {
       is_blackjack: { Args: { p_cards: number[] }; Returns: boolean };
       join_table: { Args: { p_table_id: string }; Returns: Json };
       leave_table: { Args: { p_table_id: string }; Returns: Json };
+      review_kyc: {
+        Args: { p_approve: boolean; p_reason?: string; p_submission: string };
+        Returns: Json;
+      };
       roll_d6: { Args: never; Returns: number };
       roll_round: { Args: { p_round_id: string }; Returns: Json };
       rps_play: {
@@ -488,6 +561,9 @@ export type Database = {
           p_country: string;
           p_dob: string;
           p_doc_id: string;
+          p_doc_path_back?: string;
+          p_doc_path_front: string;
+          p_doc_type: string;
           p_full_name: string;
         };
         Returns: Json;
