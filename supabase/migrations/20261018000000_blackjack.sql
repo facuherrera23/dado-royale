@@ -416,12 +416,16 @@ begin
       v_pot := v_pot + v_player.bet_amount;
     end loop;
 
-    -- Reparto inicial: 2 cartas por jugador y 2 al dealer (sin repetición)
-    update public.round_players
-       set cards = array[public.draw_card(v_round_id), public.draw_card(v_round_id)]
+    -- Reparto inicial: 2 cartas por jugador y 2 al dealer (sin repetición;
+    -- en dos pasos para que draw_card vea la carta ya repartida)
+    update public.round_players set cards = array[public.draw_card(v_round_id)]
      where round_id = v_round_id;
+    update public.round_players set cards = cards || public.draw_card(v_round_id)
+     where round_id = v_round_id;
+    update public.rounds set dealer_cards = array[public.draw_card(v_round_id)]
+     where id = v_round_id;
     update public.rounds
-       set dealer_cards = array[public.draw_card(v_round_id), public.draw_card(v_round_id)],
+       set dealer_cards = dealer_cards || public.draw_card(v_round_id),
            pot = v_pot
      where id = v_round_id;
 

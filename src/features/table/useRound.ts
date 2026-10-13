@@ -141,10 +141,15 @@ export function useBlackjackAction(tableId: string | undefined) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { roundId: string; action: 'hit' | 'stand' }) => {
+    mutationFn: async (input: {
+      roundId: string;
+      action: 'hit' | 'stand' | 'double' | 'insurance' | 'split';
+      hand?: number;
+    }) => {
       const { data, error } = await supabase.rpc('bj_action', {
         p_round_id: input.roundId,
         p_action: input.action,
+        p_hand: input.hand ?? 1,
       });
       if (error) throw error;
       return data;

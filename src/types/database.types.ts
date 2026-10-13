@@ -144,6 +144,8 @@ export type Database = {
           cards: number[];
           dice1: number | null;
           dice2: number | null;
+          hand_no: number;
+          insurance: number | null;
           is_winner: boolean;
           result: string | null;
           round_id: string;
@@ -159,6 +161,8 @@ export type Database = {
           cards?: number[];
           dice1?: number | null;
           dice2?: number | null;
+          hand_no?: number;
+          insurance?: number | null;
           is_winner?: boolean;
           result?: string | null;
           round_id: string;
@@ -174,6 +178,8 @@ export type Database = {
           cards?: number[];
           dice1?: number | null;
           dice2?: number | null;
+          hand_no?: number;
+          insurance?: number | null;
           is_winner?: boolean;
           result?: string | null;
           round_id?: string;
@@ -365,10 +371,11 @@ export type Database = {
       _roll_round_dice_poker: { Args: { p_round_id: string }; Returns: Json };
       _uniform: { Args: { p_max: number }; Returns: number };
       bj_action: {
-        Args: { p_action: string; p_round_id: string };
+        Args: { p_action: string; p_hand?: number; p_round_id: string };
         Returns: Json;
       };
       cancel_round: { Args: { p_round_id: string }; Returns: Json };
+      cancel_stale_rounds: { Args: never; Returns: number };
       card_rank: { Args: { p_card: number }; Returns: number };
       card_value: { Args: { p_card: number }; Returns: number };
       claim_faucet: { Args: never; Returns: Json };

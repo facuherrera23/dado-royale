@@ -1,10 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { useAuth } from '@/features/auth/useAuth';
+import { useWallet } from '@/features/wallet/useWallet';
 
-import { describeHand, handValue, RESULT_LABELS } from './blackjack';
+import { cardRank, describeHand, handValue, RESULT_LABELS } from './blackjack';
 import { Card } from './Card';
 import { useBlackjackAction, type Round, type RoundPlayer } from './useRound';
+
+type BjAction = 'hit' | 'stand' | 'double' | 'insurance' | 'split';
 
 interface Props {
   tableId: string;
@@ -12,18 +15,51 @@ interface Props {
   seated: boolean;
 }
 
-/** Panel de blackjack: dealer, manos, hit/stand y resultado por jugador. */
+/** Panel de blackjack: banca con carta oculta, manos (con split), acciones completas. */
 export function BlackjackPanel({ tableId, data, seated }: Props) {
   const { user } = useAuth();
+  const { data: wallet } = useWallet();
   const action = useBlackjackAction(tableId);
 
   const round = data.round;
   if (!round) return null;
 
   const players = data.players;
-  const me = players.find((p) => p.user_id === user?.id);
-  const iCanPlay = round.status === 'in_progress' && !!me && !me.stood && me.result === null;
-  const dealerValue = round.status === 'finished' ? handValue(round.dealer_cards) : null;
+  const myHands = players
+    .filter((p) => p.user_id === user?.id)
+    .sort((a, b) => a.hand_no - b.hand_no);
+  const finished = round.status === 'finished';
+  const dealerUpcardIsAce = round.dealer_cards.length > 0 && cardRank(round.dealer_cards[0]) === 14;
+  const dealerValue = finished ? handValue(round.dealer_cards) : null;
+
+  // Agrupar manos por jugador manteniendo el orden
+  const byPlayer = new Map<string, RoundPlayer[]>();
+  for (const p of players) {
+    byPlayer.set(p.user_id, [...(byPlayer.get(p.user_id) ?? []), p]);
+  }
+
+  const canInsure =
+    round.status === 'in_progress' &&
+    myHands.length === 1 &&
+    myHands[0] &&
+    !myHands[0].stood &&
+    myHands[0].cards.length === 2 &&
+    myHands[0].insurance === null &&
+    dealerUpcardIsAce;
+
+  const canSplit =
+    round.status === 'in_progress' &&
+    myHands.length === 1 &&
+    myHands[0] &&
+    !myHands[0].stood &&
+    myHands[0].cards.length === 2 &&
+    myHands[0].insurance === null &&
+    cardRank(myHands[0].cards[0]) === cardRank(myHands[0].cards[1]) &&
+    (wallet?.balance ?? 0) >= myHands[0].bet_amount;
+
+  const act = (a: BjAction, hand?: number) => {
+    action.mutate({ roundId: round.id, action: a, hand });
+  };
 
   return (
     <section className="rounded-xl border border-casino-gold/40 bg-casino-surface p-6">
@@ -31,111 +67,178 @@ export function BlackjackPanel({ tableId, data, seated }: Props) {
         <h2 className="text-lg font-semibold">
           Blackjack <span aria-hidden>♠</span>{' '}
           <span className="text-sm font-normal text-casino-muted">
-            (contra la banca · natural paga 3:2 · la banca se planta en 17)
+            (banca se planta en 17 · natural 3:2 · doblar/separar/seguro)
           </span>
         </h2>
       </div>
 
-      {/* Dealer */}
+      {/* Banca: solo la primera carta visible hasta el final */}
       <div className="mt-4 rounded-lg border border-casino-border bg-casino-bg p-4">
         <p className="text-sm font-medium text-casino-muted">
           La banca{dealerValue !== null ? ` · Total: ${String(dealerValue)}` : ''}
         </p>
         <div className="mt-3 flex gap-2">
           {round.dealer_cards.map((c, i) => (
-            <Card key={`d-${String(i)}-${String(c)}`} value={c} label={`banca ${String(i + 1)}`} />
+            <Card
+              key={`d-${String(i)}-${String(finished ? c : i === 0 ? c : null)}`}
+              value={finished || i === 0 ? c : null}
+              label={`banca ${String(i + 1)}`}
+            />
           ))}
         </div>
+        {!finished && dealerUpcardIsAce && (
+          <p className="mt-2 text-xs text-casino-gold">
+            La banca muestra un As — seguro disponible
+          </p>
+        )}
       </div>
 
       <AnimatePresence>
-        {round.status === 'finished' && me?.result && (
+        {finished && myHands.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             role="status"
-            className={`mt-4 rounded-lg border p-4 ${
-              me.result === 'loss'
-                ? 'border-casino-red/50 bg-casino-red/10'
-                : me.result === 'push'
-                  ? 'border-casino-border bg-casino-bg'
-                  : 'border-casino-green/50 bg-casino-green/10'
-            }`}
+            className="mt-4 flex flex-col gap-2"
           >
-            <p className="font-semibold">
-              {RESULT_LABELS[me.result] ?? me.result}
-              {me.result === 'win' && ` +${String(me.bet_amount)} 🪙`}
-              {me.result === 'blackjack' &&
-                ` +${String(me.bet_amount + Math.ceil((me.bet_amount * 3) / 2))} 🪙`}
-            </p>
+            {myHands.map((h) => (
+              <div
+                key={h.hand_no}
+                className={`rounded-lg border p-4 ${
+                  h.result === 'loss'
+                    ? 'border-casino-red/50 bg-casino-red/10'
+                    : h.result === 'push'
+                      ? 'border-casino-border bg-casino-bg'
+                      : 'border-casino-green/50 bg-casino-green/10'
+                }`}
+              >
+                <p className="font-semibold">
+                  {myHands.length > 1 && `Mano ${String(h.hand_no)}: `}
+                  {h.result ? (RESULT_LABELS[h.result] ?? h.result) : ''}
+                  {h.result === 'win' && ` +${String(h.bet_amount)} 🪙`}
+                  {h.result === 'blackjack' && ` +${String(Math.ceil((h.bet_amount * 3) / 2))} 🪙`}
+                </p>
+              </div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Jugadores */}
+      {/* Jugadores (cada jugador puede tener mano 1 y 2 tras separar) */}
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-        {players.map((p) => (
-          <li
-            key={p.user_id}
-            className={`flex flex-col gap-3 rounded-lg border p-4 ${
-              p.result === 'win' || p.result === 'blackjack'
-                ? 'border-casino-gold bg-casino-gold/10'
-                : 'border-casino-border bg-casino-bg'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <p className="font-medium">
-                {p.profiles?.username ?? 'Jugador'}
-                {p.user_id === user?.id && (
-                  <span className="ml-2 text-xs text-casino-muted">(tú)</span>
-                )}
-              </p>
-              <span className="text-sm text-casino-muted">
-                Apuesta: <strong className="text-casino-gold">{p.bet_amount} 🪙</strong>
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {p.cards.map((c, i) => (
-                <Card
-                  key={`${p.user_id}-${String(i)}-${String(c)}`}
-                  value={c}
-                  label={String(i + 1)}
-                />
-              ))}
-            </div>
-            <p className="text-sm text-casino-muted">
-              {p.cards.length === 0 ? 'Sin cartas' : describeHand(p)}
-              {p.stood && p.result === null ? ' · Plantado' : ''}
-              {p.result ? ` · ${RESULT_LABELS[p.result]}` : ''}
-            </p>
-          </li>
-        ))}
-      </ul>
-
-      {/* Acciones del jugador */}
-      {iCanPlay && (
-        <div className="mt-6 flex flex-wrap gap-3">
-          {(['hit', 'stand'] as const).map((a) => (
-            <button
-              key={a}
-              onClick={() => {
-                action.mutate({ roundId: round.id, action: a });
-              }}
-              disabled={action.isPending}
-              className={`rounded-lg px-8 py-3 text-lg font-bold shadow-lg transition-transform enabled:hover:scale-105 disabled:opacity-50 ${
-                a === 'hit'
-                  ? 'bg-casino-gold text-black'
-                  : 'border border-casino-gold text-casino-gold'
+        {[...byPlayer.values()].map((hands) => {
+          const first = hands[0];
+          return (
+            <li
+              key={first.user_id}
+              className={`flex flex-col gap-3 rounded-lg border p-4 ${
+                hands.some((h) => h.result === 'win' || h.result === 'blackjack')
+                  ? 'border-casino-gold bg-casino-gold/10'
+                  : 'border-casino-border bg-casino-bg'
               }`}
             >
-              {action.isPending ? '…' : a === 'hit' ? '♠ Pedir carta' : '✋ Plantarse'}
+              <div className="flex items-center justify-between">
+                <p className="font-medium">
+                  {first.profiles?.username ?? 'Jugador'}
+                  {first.user_id === user?.id && (
+                    <span className="ml-2 text-xs text-casino-muted">(tú)</span>
+                  )}
+                </p>
+                {first.insurance !== null && (
+                  <span className="text-xs text-casino-muted">asegurado {first.insurance} 🪙</span>
+                )}
+              </div>
+
+              {hands
+                .sort((a, b) => a.hand_no - b.hand_no)
+                .map((h) => (
+                  <div key={h.hand_no} className="rounded-md border border-casino-border/60 p-2">
+                    <div className="flex items-center justify-between text-xs text-casino-muted">
+                      <span>
+                        {hands.length > 1 && `Mano ${String(h.hand_no)} · `}Apuesta:{' '}
+                        <strong className="text-casino-gold">{h.bet_amount} 🪙</strong>
+                      </span>
+                      <span>{describeHand(h)}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {h.cards.map((c, i) => (
+                        <Card
+                          key={`${h.user_id}-${String(h.hand_no)}-${String(i)}-${String(c)}`}
+                          value={c}
+                          label={String(i + 1)}
+                        />
+                      ))}
+                    </div>
+
+                    {h.user_id === user?.id && !finished && !h.stood && h.result === null && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            act('hit', h.hand_no);
+                          }}
+                          disabled={action.isPending}
+                          className="rounded-lg bg-casino-gold px-5 py-2 font-bold text-black enabled:hover:scale-105 disabled:opacity-50"
+                        >
+                          ♠ Pedir carta
+                        </button>
+                        <button
+                          onClick={() => {
+                            act('stand', h.hand_no);
+                          }}
+                          disabled={action.isPending}
+                          className="rounded-lg border border-casino-gold px-5 py-2 font-bold text-casino-gold enabled:hover:scale-105 disabled:opacity-50"
+                        >
+                          ✋ Plantarse
+                        </button>
+                        {h.cards.length === 2 && (
+                          <button
+                            onClick={() => {
+                              act('double', h.hand_no);
+                            }}
+                            disabled={action.isPending}
+                            title="Doblas la apuesta, recibes una carta y te plantas"
+                            className="rounded-lg border border-casino-green px-5 py-2 font-bold text-casino-green enabled:hover:scale-105 disabled:opacity-50"
+                          >
+                            ×2 Doblar
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Acciones especiales (una vez): seguro y separar */}
+      {seated && !finished && (canInsure || canSplit) && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {canInsure && myHands[0] && (
+            <button
+              onClick={() => {
+                act('insurance');
+              }}
+              disabled={action.isPending}
+              className="rounded-md border border-casino-gold/60 px-4 py-2 text-sm font-semibold text-casino-gold enabled:hover:bg-casino-gold/10 disabled:opacity-40"
+            >
+              🛡️ Asegurar por {String(Math.floor(myHands[0].bet_amount / 2))} 🪙
             </button>
-          ))}
+          )}
+          {canSplit && (
+            <button
+              onClick={() => {
+                act('split');
+              }}
+              disabled={action.isPending}
+              className="rounded-md border border-casino-gold/60 px-4 py-2 text-sm font-semibold text-casino-gold enabled:hover:bg-casino-gold/10 disabled:opacity-40"
+            >
+              ⚔️ Separar el par
+            </button>
+          )}
         </div>
       )}
-      {round.status === 'in_progress' && seated && me && (me.stood || me.result) && (
-        <p className="mt-6 text-sm text-casino-muted">Esperando al resto de jugadores…</p>
-      )}
+
       {action.isError && (
         <p role="alert" className="mt-4 text-sm text-casino-red">
           {action.error.message}
