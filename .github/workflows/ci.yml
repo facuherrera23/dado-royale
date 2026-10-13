@@ -11,6 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
       # Levanta el stack local (Docker ya viene en ubuntu-latest) y aplica migraciones
       - run: supabase start
       - name: Tests de base de datos (pgTAP)
