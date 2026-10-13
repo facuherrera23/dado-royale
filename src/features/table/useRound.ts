@@ -118,6 +118,47 @@ export function useRollRound(tableId: string | undefined) {
   });
 }
 
+/** Fija la apuesta en una mesa de blackjack (pendiente hasta la ronda). */
+export function useSetBet(tableId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (amount: number) => {
+      const { data, error } = await supabase.rpc('set_bet', {
+        p_table_id: tableId ?? '',
+        p_amount: amount,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['table-players', tableId] });
+    },
+  });
+}
+
+/** Acción de blackjack: 'hit' (pide carta) o 'stand' (planta). */
+export function useBlackjackAction(tableId: string | undefined) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { roundId: string; action: 'hit' | 'stand' }) => {
+      const { data, error } = await supabase.rpc('bj_action', {
+        p_round_id: input.roundId,
+        p_action: input.action,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [ROUND_KEY, tableId] });
+      void queryClient.invalidateQueries({ queryKey: ['round-history', tableId] });
+      void queryClient.invalidateQueries({ queryKey: ['wallet', user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['ledger', user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['tables'] });
+    },
+  });
+}
+
 /** Cancela una ronda atascada y reembolsa todos. */
 export function useCancelRound(tableId: string | undefined) {
   const queryClient = useQueryClient();

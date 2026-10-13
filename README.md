@@ -57,10 +57,12 @@ El `.env` por defecto apunta al stack local (claves públicas del stack de desar
 
 ## Reglas del juego (motor SQL)
 
-**Dos juegos:** Dados (2d6) y **Póker de 2 cartas**. La mesa define el juego (`tables.game`) y el lobby tiene selector 🎲/🃏. Ambos comparten pozo, comisión del 4%, desempates (máx. 3) y reembolsos.
+**Tres juegos:** Dados (2d6), **Póker de 2 cartas** y **Blackjack (21) vs la banca**. La mesa define el juego (`tables.game`) y el lobby tiene selector 🎲/🃏/♠. Dados y póker comparten pozo, comisión del 4%, desempates (máx. 3) y reembolsos.
 
 - **Dados:** 2d6 por jugador, generados en el servidor con `pgcrypto.gen_random_bytes` y **rejection sampling sin sesgo**. Nunca `random()`, nunca en el cliente.
 - **Póker 2 cartas:** baraja única de 52 por ronda (`draw_card` con muestreo uniforme criptográfico, **sin repetición**). Victoria: pareja > carta alta, con kicker (`hand_score`). Los empatados reciben cartas nuevas.
+- **Blackjack (21):** vs la banca, con **apuesta variable** (`set_bet` dentro del rango min–max de la mesa; solo entran en la mano los sentados con apuesta fijada). Acciones `bj_action(hit|stand)`; la banca roba hasta 17; **natural paga 3:2** (`stake + ceil(1.5×stake)`, redondeo a favor del jugador), victoria normal 2× stake, push = reembolso íntegro. No hay comisión del 4%: el beneficio de la casa son las apuestas perdedoras (asientos `house_settlement` compensados → ledger cuadra a 0 por ronda). La banca tiene un **fondo inicial de 10.000.000 fichas** (`house-seed-initial` en el ledger, auditable) para garantizar solvencia de los pagos.
+- **Cancelación:** en blackjack solo es posible si nadie ha actuado aún; lo demás igual (timeout de 300s con reembolso).
 - **Inicio:** cualquier jugador sentado llama `start_round(table_id)`; con ≥ `min_players` (2) se crea la ronda y se bloquean las apuestas (`bet_lock`) de todos los sentados en **una sola transacción**. Una ronda por mesa.
 - **Resolución:** cada jugador tira sus dados con `roll_round(round_id)`; al completar todos: gana el total más alto.
 - **Comisión:** `house_fee = floor(pozo × 4 / 100)`. **Redondeo a favor del jugador**: `payout = pozo − house_fee` y ambos suman exactamente el pozo.

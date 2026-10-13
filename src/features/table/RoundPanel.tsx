@@ -7,6 +7,7 @@ import { useConfig } from '@/lib/useConfig';
 
 import { Card } from './Card';
 import { Dice } from './Dice';
+import { BlackjackPanel } from './BlackjackPanel';
 import { useCancelRound, useRollRound, type Round, type RoundPlayer } from './useRound';
 
 interface Props {
@@ -25,6 +26,10 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
   const { data: config } = useConfig();
   const houseFeePct = config?.get('house_fee_percent') ?? 4;
   const isPoker = game === 'poker';
+
+  if (game === 'blackjack') {
+    return <BlackjackPanel tableId={tableId} data={data} seated={seated} />;
+  }
 
   const round = data.round;
   if (!round) return null;

@@ -109,10 +109,10 @@ select is(
   'finished: comisión 8 + premio 192 = pozo 200 (o refund completo si se agotaron desempates)'
 );
 
--- 10. La casa cobra exactamente la comisión (si finished)
+-- 10. La casa cobra exactamente la comisión (sobre el fondo semilla de blackjack)
 reset role;
 select is(
-  (select balance from public.house_account where id = true),
+  (select balance - 10000000 from public.house_account where id = true),
   (select (case when status = 'finished' then 8 else 0 end)::bigint from public.rounds where id = (select id from gid)),
   'house_account recibe solo la comisión del 4%'
 );

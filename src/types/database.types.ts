@@ -141,10 +141,13 @@ export type Database = {
           bet_amount: number;
           card1: number | null;
           card2: number | null;
+          cards: number[];
           dice1: number | null;
           dice2: number | null;
           is_winner: boolean;
+          result: string | null;
           round_id: string;
+          stood: boolean;
           tiebreak_attempts: number;
           total: number | null;
           user_id: string;
@@ -153,10 +156,13 @@ export type Database = {
           bet_amount: number;
           card1?: number | null;
           card2?: number | null;
+          cards?: number[];
           dice1?: number | null;
           dice2?: number | null;
           is_winner?: boolean;
+          result?: string | null;
           round_id: string;
+          stood?: boolean;
           tiebreak_attempts?: number;
           total?: number | null;
           user_id: string;
@@ -165,10 +171,13 @@ export type Database = {
           bet_amount?: number;
           card1?: number | null;
           card2?: number | null;
+          cards?: number[];
           dice1?: number | null;
           dice2?: number | null;
           is_winner?: boolean;
+          result?: string | null;
           round_id?: string;
+          stood?: boolean;
           tiebreak_attempts?: number;
           total?: number | null;
           user_id?: string;
@@ -193,6 +202,7 @@ export type Database = {
       rounds: {
         Row: {
           created_at: string;
+          dealer_cards: number[];
           finished_at: string | null;
           house_fee: number;
           id: string;
@@ -204,6 +214,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          dealer_cards?: number[];
           finished_at?: string | null;
           house_fee?: number;
           id?: string;
@@ -215,6 +226,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          dealer_cards?: number[];
           finished_at?: string | null;
           house_fee?: number;
           id?: string;
@@ -246,6 +258,7 @@ export type Database = {
           joined_at: string;
           last_action_at: string;
           left_at: string | null;
+          pending_bet: number | null;
           status: Database['public']['Enums']['table_player_status'];
           table_id: string;
           user_id: string;
@@ -254,6 +267,7 @@ export type Database = {
           joined_at?: string;
           last_action_at?: string;
           left_at?: string | null;
+          pending_bet?: number | null;
           status?: Database['public']['Enums']['table_player_status'];
           table_id: string;
           user_id: string;
@@ -262,6 +276,7 @@ export type Database = {
           joined_at?: string;
           last_action_at?: string;
           left_at?: string | null;
+          pending_bet?: number | null;
           status?: Database['public']['Enums']['table_player_status'];
           table_id?: string;
           user_id?: string;
@@ -289,6 +304,7 @@ export type Database = {
           created_at: string;
           game: string;
           id: string;
+          max_bet: number | null;
           max_players: number;
           name: string;
           status: Database['public']['Enums']['table_status'];
@@ -298,6 +314,7 @@ export type Database = {
           created_at?: string;
           game?: string;
           id?: string;
+          max_bet?: number | null;
           max_players: number;
           name: string;
           status?: Database['public']['Enums']['table_status'];
@@ -307,6 +324,7 @@ export type Database = {
           created_at?: string;
           game?: string;
           id?: string;
+          max_bet?: number | null;
           max_players?: number;
           name?: string;
           status?: Database['public']['Enums']['table_status'];
@@ -344,9 +362,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _roll_round_dice_poker: { Args: { p_round_id: string }; Returns: Json };
       _uniform: { Args: { p_max: number }; Returns: number };
+      bj_action: {
+        Args: { p_action: string; p_round_id: string };
+        Returns: Json;
+      };
       cancel_round: { Args: { p_round_id: string }; Returns: Json };
       card_rank: { Args: { p_card: number }; Returns: number };
+      card_value: { Args: { p_card: number }; Returns: number };
       claim_faucet: { Args: never; Returns: Json };
       config_int: { Args: { p_key: string }; Returns: number };
       draw_card: { Args: { p_round: string }; Returns: number };
@@ -360,15 +384,25 @@ export type Database = {
         }[];
       };
       hand_score: { Args: { p_c1: number; p_c2: number }; Returns: number };
+      hand_value: { Args: { p_cards: number[] }; Returns: number };
       is_admin: { Args: { p_uid?: string }; Returns: boolean };
+      is_blackjack: { Args: { p_cards: number[] }; Returns: boolean };
       join_table: { Args: { p_table_id: string }; Returns: Json };
       leave_table: { Args: { p_table_id: string }; Returns: Json };
       roll_d6: { Args: never; Returns: number };
       roll_round: { Args: { p_round_id: string }; Returns: Json };
+      set_bet: { Args: { p_amount: number; p_table_id: string }; Returns: Json };
       start_round: { Args: { p_table_id: string }; Returns: Json };
     };
     Enums: {
-      ledger_type: 'faucet' | 'bet_lock' | 'payout' | 'refund' | 'house_fee' | 'adjustment';
+      ledger_type:
+        | 'faucet'
+        | 'bet_lock'
+        | 'payout'
+        | 'refund'
+        | 'house_fee'
+        | 'adjustment'
+        | 'house_settlement';
       round_status: 'waiting' | 'in_progress' | 'finished' | 'cancelled';
       table_player_status: 'seated' | 'left';
       table_status: 'open' | 'in_round' | 'closed';
@@ -496,7 +530,15 @@ export const Constants = {
   },
   public: {
     Enums: {
-      ledger_type: ['faucet', 'bet_lock', 'payout', 'refund', 'house_fee', 'adjustment'],
+      ledger_type: [
+        'faucet',
+        'bet_lock',
+        'payout',
+        'refund',
+        'house_fee',
+        'adjustment',
+        'house_settlement',
+      ],
       round_status: ['waiting', 'in_progress', 'finished', 'cancelled'],
       table_player_status: ['seated', 'left'],
       table_status: ['open', 'in_round', 'closed'],

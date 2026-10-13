@@ -21,6 +21,7 @@ export function TableCard({ table }: { table: TableWithSeated }) {
   const join = useJoinTable();
 
   const full = table.seated >= table.max_players;
+  // En blackjack basta el mínimo para sentarse (la apuesta se fija después)
   const affordable = (wallet?.balance ?? 0) >= table.bet_amount;
   const seatedHere = mySeat === table.id;
   const seatedElsewhere = !!mySeat && !seatedHere;
@@ -44,7 +45,9 @@ export function TableCard({ table }: { table: TableWithSeated }) {
           <p className="text-sm text-casino-muted">{STATUS_LABEL[table.status] ?? table.status}</p>
         </div>
         <span className="rounded-md bg-casino-bg px-3 py-1 text-lg font-bold text-casino-gold">
-          {table.bet_amount.toLocaleString('es')} 🪙
+          {table.game === 'blackjack' && table.max_bet
+            ? `${table.bet_amount.toLocaleString('es')}–${table.max_bet.toLocaleString('es')} 🪙`
+            : `${table.bet_amount.toLocaleString('es')} 🪙`}
         </span>
       </div>
 

@@ -5,6 +5,7 @@ import { useLeaveTable, useTablePlayers, useTables } from '@/features/lobby/useT
 import { useConfig } from '@/lib/useConfig';
 
 import { RoundPanel } from './RoundPanel';
+import { BetSetter } from './BetSetter';
 import { useCurrentRound, useRoundHistory, useStartRound } from './useRound';
 
 /**
@@ -30,16 +31,33 @@ export function TablePage() {
   const roundActive = !!roundData?.round && roundData.round.status === 'in_progress';
   const potentialPot = table ? table.bet_amount * seatedCount : 0;
 
+  const betRangeText =
+    table != null && table.max_bet != null
+      ? `${String(table.bet_amount)}–${String(table.max_bet)}`
+      : '';
+
   return (
     <main className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{table?.name ?? 'Mesa'}</h1>
           <p className="mt-1 text-sm text-casino-muted">
-            Apuesta fija:{' '}
-            <strong className="text-casino-gold">{table?.bet_amount ?? '…'} 🪙</strong>
-            {' · '}Comisión de la casa 4% del pozo
-            {table ? `: ~${String(Math.floor((potentialPot * 4) / 100))} 🪙` : ''}
+            {table?.game === 'blackjack' ? (
+              <>
+                Apuesta variable:{' '}
+                <strong className="text-casino-gold">
+                  {table.bet_amount}–{table.max_bet ?? 0} 🪙
+                </strong>
+                {' · '}Contra la banca · Natural paga 3:2 · Se planta en 17
+              </>
+            ) : (
+              <>
+                Apuesta fija:{' '}
+                <strong className="text-casino-gold">{table?.bet_amount ?? '…'} 🪙</strong>
+                {' · '}Comisión de la casa 4% del pozo
+                {table ? `: ~${String(Math.floor((potentialPot * 4) / 100))} 🪙` : ''}
+              </>
+            )}
           </p>
         </div>
         {seated && !roundActive && (
@@ -108,15 +126,39 @@ export function TablePage() {
             ))}
           </ul>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col gap-4">
+            {seated && table?.game === 'blackjack' && tableId && (
+              <BetSetter
+                tableId={tableId}
+                min={table.bet_amount}
+                max={table.max_bet ?? table.bet_amount}
+                current={players?.find((p) => p.user_id === user?.id)?.pending_bet ?? null}
+              />
+            )}
             {seated ? (
-              seatedCount >= minPlayers ? (
+              table?.game === 'blackjack' ? (
+                players?.find((p) => p.user_id === user?.id)?.pending_bet ? (
+                  <button
+                    onClick={() => {
+                      start.mutate();
+                    }}
+                    disabled={start.isPending}
+                    className="self-start rounded-lg bg-casino-green px-8 py-3 text-lg font-bold text-white shadow-lg transition-transform enabled:hover:scale-105 disabled:opacity-50"
+                  >
+                    {start.isPending ? 'Repartiendo…' : '▶ Repartir cartas'}
+                  </button>
+                ) : (
+                  <p className="text-sm text-casino-muted">
+                    Fija tu apuesta entre {betRangeText} 🪙 para entrar en la siguiente mano.
+                  </p>
+                )
+              ) : seatedCount >= minPlayers ? (
                 <button
                   onClick={() => {
                     start.mutate();
                   }}
                   disabled={start.isPending}
-                  className="rounded-lg bg-casino-green px-8 py-3 text-lg font-bold text-white shadow-lg transition-transform enabled:hover:scale-105 disabled:opacity-50"
+                  className="self-start rounded-lg bg-casino-green px-8 py-3 text-lg font-bold text-white shadow-lg transition-transform enabled:hover:scale-105 disabled:opacity-50"
                 >
                   {start.isPending
                     ? 'Creando ronda…'
