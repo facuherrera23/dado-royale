@@ -66,3 +66,55 @@ export function playLose() {
   tone(300, 220, 'sine', 0.07, 0);
   tone(220, 300, 'sine', 0.07, 0.18);
 }
+
+// -----------------------------------------------------------------
+// Sonido ambiente de casino: ruido marrón filtrado, en loop y muy suave
+// -----------------------------------------------------------------
+let ambientNodes: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
+
+function buildNoiseBuffer(ac: AudioContext): AudioBuffer {
+  const seconds = 4;
+  const buffer = ac.createBuffer(1, ac.sampleRate * seconds, ac.sampleRate);
+  const data = buffer.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < data.length; i++) {
+    const white = Math.random() * 2 - 1;
+    last = (last + 0.02 * white) / 1.02; // brown noise
+    data[i] = last * 3.5;
+  }
+  return buffer;
+}
+
+export function startAmbient() {
+  if (useUiStore.getState().muted || ambientNodes) return;
+  const ac = audio();
+  if (!ac) return;
+  const source = ac.createBufferSource();
+  source.buffer = buildNoiseBuffer(ac);
+  source.loop = true;
+  const filter = ac.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 400;
+  const gain = ac.createGain();
+  gain.gain.value = 0.012;
+  source.connect(filter).connect(gain).connect(ac.destination);
+  source.start();
+  ambientNodes = { source, gain };
+}
+
+export function stopAmbient() {
+  if (!ambientNodes) return;
+  try {
+    ambientNodes.source.stop();
+  } catch {
+    /* ya detenido */
+  }
+  ambientNodes = null;
+}
+
+/** Sincroniza el ambiente con las preferencias y el mute global. */
+export function syncAmbient() {
+  const { muted, ambient } = useUiStore.getState();
+  if (ambient && !muted) startAmbient();
+  else stopAmbient();
+}

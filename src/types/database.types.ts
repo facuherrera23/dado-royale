@@ -413,6 +413,7 @@ export type Database = {
           username: string;
         }[];
       };
+      get_my_stats: { Args: never; Returns: Json };
       hand_score: { Args: { p_c1: number; p_c2: number }; Returns: number };
       hand_value: { Args: { p_cards: number[] }; Returns: number };
       is_admin: { Args: { p_uid?: string }; Returns: boolean };

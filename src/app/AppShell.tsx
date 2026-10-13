@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import { Avatar } from '@/components/Avatar';
 import { useAuth } from '@/features/auth/useAuth';
 import { BalanceBadge } from '@/features/wallet/Balance';
+import { syncAmbient } from '@/lib/sounds';
 import { useUiStore } from '@/lib/uiStore';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -14,7 +15,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 export function AppShell() {
   const { profile, signOut } = useAuth();
   const isAdmin = profile?.is_admin ?? false;
-  const { muted, toggleMuted } = useUiStore();
+  const { muted, ambient, toggleMuted, toggleAmbient } = useUiStore();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -40,7 +41,21 @@ export function AppShell() {
           <div className="flex items-center gap-3">
             <BalanceBadge />
             <button
-              onClick={toggleMuted}
+              onClick={() => {
+                toggleAmbient();
+                syncAmbient();
+              }}
+              aria-label={ambient ? 'Quitar sonido ambiente' : 'Activar sonido ambiente de casino'}
+              aria-pressed={ambient}
+              className="rounded-md border border-casino-border px-2.5 py-1.5 text-sm text-casino-muted transition-colors hover:text-casino-text"
+            >
+              🎰
+            </button>
+            <button
+              onClick={() => {
+                toggleMuted();
+                syncAmbient();
+              }}
               aria-label={muted ? 'Activar sonido' : 'Silenciar sonido'}
               aria-pressed={muted}
               className="rounded-md border border-casino-border px-2.5 py-1.5 text-sm text-casino-muted transition-colors hover:text-casino-text"

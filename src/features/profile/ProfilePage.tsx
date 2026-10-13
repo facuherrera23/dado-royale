@@ -7,6 +7,8 @@ import { useState } from 'react';
 import { Avatar } from '@/components/Avatar';
 import { AVATARS } from '@/lib/avatars';
 
+import { StatsSection } from './StatsSection';
+
 /** Perfil: avatar editable (emoji), nombre y estadísticas rápidas. */
 export function ProfilePage() {
   const { user, profile } = useAuth();
@@ -81,6 +83,8 @@ export function ProfilePage() {
           </p>
         )}
       </section>
+
+      <StatsSection />
     </main>
   );
 }
