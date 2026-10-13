@@ -51,11 +51,12 @@ reset role;
 create temp table bjr as select id from public.rounds where status = 'in_progress';
 grant select on pg_temp.bjr to authenticated;
 
--- 8-9. Reparto inicial correcto: 2 cartas/jugador, 2 dealer, sin repetidas
+-- 8. Reparto inicial correcto: 2 cartas/jugador; la banca tiene 1 visible + 1 oculta
 select ok(
   (select bool_and(cardinality(cards) = 2) from public.round_players where round_id = (select id from bjr))
-  and (select cardinality(dealer_cards) from public.rounds where id = (select id from bjr)) = 2,
-  'Todos tienen 2 cartas y el dealer 2'
+  and (select cardinality(dealer_cards) from public.rounds where id = (select id from bjr)) = 1
+  and (select cardinality(cards) from public.round_dealer_holes where round_id = (select id from bjr)) = 1,
+  'Todos tienen 2 cartas; la banca 1 visible + 1 oculta'
 );
 select ok(
   coalesce((select count(*) = 0 from (

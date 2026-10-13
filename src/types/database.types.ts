@@ -136,6 +136,29 @@ export type Database = {
         };
         Relationships: [];
       };
+      round_dealer_holes: {
+        Row: {
+          cards: number[];
+          round_id: string;
+        };
+        Insert: {
+          cards: number[];
+          round_id: string;
+        };
+        Update: {
+          cards?: number[];
+          round_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'round_dealer_holes_round_id_fkey';
+            columns: ['round_id'];
+            isOneToOne: true;
+            referencedRelation: 'rounds';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       round_players: {
         Row: {
           bet_amount: number;

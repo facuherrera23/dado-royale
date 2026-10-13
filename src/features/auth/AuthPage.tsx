@@ -36,6 +36,22 @@ export function AuthPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    setOauthLoading(true);
+    setServerError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}#/lobby`,
+      },
+    });
+    if (error) {
+      setServerError(error.message);
+      setOauthLoading(false);
+    }
+  };
 
   const set = (key: string, value: string | boolean) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -277,6 +293,21 @@ export function AuthPage() {
             className="rounded-md bg-casino-gold px-4 py-2 font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {loading ? 'Cargando…' : mode === 'login' ? 'Entrar' : 'Crear cuenta'}
+          </button>
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-casino-border" />
+            <span className="text-xs text-casino-muted">o</span>
+            <span className="h-px flex-1 bg-casino-border" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void handleGoogle()}
+            disabled={oauthLoading}
+            className="rounded-md border border-casino-border bg-white px-4 py-2 font-semibold text-gray-800 transition-opacity enabled:hover:opacity-90 disabled:opacity-50"
+          >
+            {oauthLoading ? 'Redirigiendo a Google…' : 'Continuar con Google'}
           </button>
         </form>
       </div>

@@ -97,10 +97,12 @@ export function BlackjackPanel({ tableId, data, seated }: Props) {
           {round.dealer_cards.map((c, i) => (
             <Card
               key={`d-${String(i)}-${String(finished ? c : i === 0 ? c : null)}`}
-              value={finished || i === 0 ? c : null}
+              value={c}
               label={`banca ${String(i + 1)}`}
             />
           ))}
+          {/* Carta oculta de la banca (real: ni la API ni Realtime la exponen) */}
+          {!finished && round.dealer_cards.length > 0 && <Card value={null} label="banca oculta" />}
         </div>
         {!finished && dealerUpcardIsAce && (
           <p className="mt-2 text-xs text-casino-gold">

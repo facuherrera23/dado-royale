@@ -77,7 +77,7 @@ select throws_ok($$select public.bj_action((select id from xr2), 'double')$$,
 -- ------------------------------------------------------------
 reset role;
 -- Forzamos las cartas del dealer (como superusuario; la API nunca lo permite)
-update public.rounds set dealer_cards = array[13::smallint, 38::smallint] where id = (select id from xr2); -- A y K: natural
+update public.rounds set dealer_cards = array[13::smallint, 38::smallint] where id = (select id from xr2); delete from public.round_dealer_holes where round_id = (select id from xr2); -- A y K: natural
 set local request.jwt.claims = '{"sub":"c0010001-0000-0000-0000-000000000001","role":"authenticated"}';
 -- Ya pidió carta antes: seguro solo se puede antes de jugar la mano (P0020)? Lo probamos:
 select throws_ok($$select public.bj_action((select id from xr2), 'insurance')$$,
@@ -100,7 +100,7 @@ select public.start_round((select id from public.tables where name = 'Blackjack 
 reset role;
 create temp table xr3 as select id from public.rounds where status = 'in_progress' order by created_at desc limit 1;
 grant select on pg_temp.xr3 to authenticated;
-update public.rounds set dealer_cards = array[13::smallint, 38::smallint] where id = (select id from xr3);
+update public.rounds set dealer_cards = array[13::smallint, 38::smallint] where id = (select id from xr3); delete from public.round_dealer_holes where round_id = (select id from xr3);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"c0010001-0000-0000-0000-000000000001","role":"authenticated"}';

@@ -47,6 +47,7 @@ declare
   v_natural boolean;
   v_result_txt text;
   v_winnings bigint;
+  v_hole_cards smallint[];
 begin
   if v_uid is null then
     raise exception 'No autenticado' using errcode = 'P0001';
@@ -211,6 +212,13 @@ begin
   end if;
 
   v_dealer_cards := v_round.dealer_cards;
+  -- Revelar la carta oculta de la banca (inaccesible desde la API)
+  select h.cards into v_hole_cards from public.round_dealer_holes h
+   where h.round_id = p_round_id;
+  if v_hole_cards is not null then
+    v_dealer_cards := v_dealer_cards || v_hole_cards;
+    delete from public.round_dealer_holes where round_id = p_round_id;
+  end if;
   while public.hand_value(v_dealer_cards) < 17 loop
     v_dealer_cards := v_dealer_cards || public.draw_card(p_round_id);
   end loop;
@@ -382,6 +390,7 @@ begin
   end loop;
 
   update public.rounds set status = 'cancelled', finished_at = now() where id = p_round_id;
+  delete from public.round_dealer_holes where round_id = p_round_id;
   update public.tables set status = 'open' where id = v_round.table_id;
   return jsonb_build_object('round_id', p_round_id, 'status', 'cancelled', 'reason', 'timeout');
 end;
@@ -433,6 +442,7 @@ begin
     end loop;
 
     update public.rounds set status = 'cancelled', finished_at = now() where id = v_round.id;
+    delete from public.round_dealer_holes where round_id = v_round.id;
     update public.tables set status = 'open' where id = v_round.table_id;
     v_count := v_count + 1;
   end loop;

@@ -4,6 +4,8 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useLeaveTable, useTablePlayers, useTables } from '@/features/lobby/useTables';
 import { useConfig } from '@/lib/useConfig';
 
+import { Avatar } from '@/components/Avatar';
+
 import { RoundPanel } from './RoundPanel';
 import { BetSetter } from './BetSetter';
 import { useCurrentRound, useRoundHistory, useStartRound } from './useRound';
@@ -113,9 +115,7 @@ export function TablePage() {
                 key={p.user_id}
                 className="flex items-center gap-3 rounded-lg border border-casino-border bg-casino-bg px-4 py-3"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-casino-gold/20 font-bold text-casino-gold">
-                  {p.profiles.username[0].toUpperCase()}
-                </span>
+                <Avatar username={p.profiles.username} avatarUrl={p.profiles.avatar_url} />
                 <span className="font-medium">
                   {p.profiles.username}
                   {p.user_id === user?.id && (

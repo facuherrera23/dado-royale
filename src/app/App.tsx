@@ -26,6 +26,9 @@ const AdminPage = lazy(async () => ({
 const TermsPage = lazy(async () => ({
   default: (await import('@/features/legal/TermsPage')).TermsPage,
 }));
+const ProfilePage = lazy(async () => ({
+  default: (await import('@/features/profile/ProfilePage')).ProfilePage,
+}));
 
 function PageFallback() {
   return (
@@ -69,6 +72,7 @@ export function App() {
                 <Route path="/mesa/:id" element={<TablePage />} />
                 <Route path="/wallet" element={<WalletPage />} />
                 <Route path="/ranking" element={<RankingPage />} />
+                <Route path="/perfil" element={<ProfilePage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
             </Route>

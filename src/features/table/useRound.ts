@@ -7,7 +7,9 @@ import { supabase } from '@/lib/supabaseClient';
 import type { Tables } from '@/types/database.types';
 
 export type Round = Tables<'rounds'>;
-export type RoundPlayer = Tables<'round_players'> & { profiles: { username: string } | null };
+export type RoundPlayer = Tables<'round_players'> & {
+  profiles: { username: string; avatar_url: string | null } | null;
+};
 
 const ROUND_KEY = 'current-round';
 
@@ -32,7 +34,7 @@ export function useCurrentRound(tableId: string | undefined) {
 
       const { data: players, error: e2 } = await supabase
         .from('round_players')
-        .select('*, profiles(username)')
+        .select('*, profiles(username, avatar_url)')
         .eq('round_id', round.id);
       if (e2) throw e2;
       return { round, players };

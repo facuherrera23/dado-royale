@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 
+import { Avatar } from '@/components/Avatar';
 import { useAuth } from '@/features/auth/useAuth';
 import { BalanceBadge } from '@/features/wallet/Balance';
 import { useUiStore } from '@/lib/uiStore';
@@ -46,7 +47,16 @@ export function AppShell() {
             >
               {muted ? '🔇' : '🔊'}
             </button>
-            <span className="text-sm text-casino-muted">{profile?.username ?? '…'}</span>
+            <Link
+              to="/perfil"
+              className="flex items-center gap-2 rounded-md px-1 py-0.5 text-sm text-casino-muted transition-colors hover:text-casino-text"
+              title="Mi perfil"
+            >
+              {profile && (
+                <Avatar username={profile.username} avatarUrl={profile.avatar_url} size="sm" />
+              )}
+              {profile?.username ?? '…'}
+            </Link>
             <button
               onClick={() => void signOut()}
               className="rounded-md border border-casino-border px-3 py-1.5 text-sm text-casino-muted transition-colors hover:border-casino-red hover:text-casino-red"
