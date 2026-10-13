@@ -1,5 +1,6 @@
 import { BalanceCard } from './Balance';
 import { FaucetButton } from './FaucetButton';
+import { HandHistory } from './HandHistory';
 import { LedgerHistory } from './LedgerHistory';
 
 /** Página de billetera: saldo, faucet con cooldown e historial paginado. */
@@ -14,6 +15,7 @@ export function WalletPage() {
           <FaucetButton />
         </div>
       </section>
+      <HandHistory />
       <LedgerHistory />
     </main>
   );

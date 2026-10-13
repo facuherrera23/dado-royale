@@ -383,7 +383,7 @@ export type Database = {
       draw_card: { Args: { p_round: string }; Returns: number };
       get_admin_stats: { Args: never; Returns: Json };
       get_leaderboard: {
-        Args: { p_limit?: number };
+        Args: { p_game?: string; p_limit?: number };
         Returns: {
           rounds_won: number;
           total_won: number;

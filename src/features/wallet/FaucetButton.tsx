@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useConfig } from '@/lib/useConfig';
+import { playChip } from '@/lib/sounds';
 
 import { useClaimFaucet, useLastFaucet } from './useLedger';
 
@@ -42,7 +43,11 @@ export function FaucetButton() {
     <div className="flex flex-col gap-2">
       <button
         onClick={() => {
-          claim.mutate();
+          claim.mutate(undefined, {
+            onSuccess: () => {
+              playChip();
+            },
+          });
         }}
         disabled={onCooldown || claim.isPending}
         className="rounded-md bg-casino-green px-4 py-2 font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"

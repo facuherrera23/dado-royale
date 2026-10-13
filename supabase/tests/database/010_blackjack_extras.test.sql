@@ -61,10 +61,12 @@ grant select on pg_temp.xr2 to authenticated;
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"c0010001-0000-0000-0000-000000000001","role":"authenticated"}';
--- Forzamos un hit seguro añadiendo una carta baja directamente
+-- Forzamos determinísticamente una tercera carta (como superusuario)
 reset role;
-update public.round_players set cards = cards || 1::smallint
- where round_id = (select id from xr2) and not (1 = any (cards));
+update public.round_players
+   set cards = cards || (select min(c)::smallint from generate_series(1,52) g(c)
+                          where c::smallint <> all (cards))
+ where round_id = (select id from xr2);
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"c0010001-0000-0000-0000-000000000001","role":"authenticated"}';
 select throws_ok($$select public.bj_action((select id from xr2), 'double')$$,

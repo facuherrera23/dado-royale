@@ -1,13 +1,19 @@
+import { useState } from 'react';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabaseClient';
 
-/** Ranking global: fichas ganadas y rondas ganadas (RPC get_leaderboard). */
+/** Ranking global: fichas ganadas y rondas ganadas, con filtro por juego. */
 export function RankingPage() {
+  const [game, setGame] = useState<string | null>(null);
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['leaderboard'],
+    queryKey: ['leaderboard', game],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_leaderboard', { p_limit: 20 });
+      const { data, error } = await supabase.rpc('get_leaderboard', {
+        p_limit: 20,
+        p_game: game ?? undefined,
+      });
       if (error) throw error;
       return data.filter((r) => r.total_won > 0 || r.rounds_won > 0);
     },
@@ -15,7 +21,33 @@ export function RankingPage() {
 
   return (
     <main className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">🏆 Ranking</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">🏆 Ranking</h1>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por juego">
+          {(
+            [
+              [null, 'Todos'],
+              ['dice', '🎲 Dados'],
+              ['poker', '🃏 Póker'],
+              ['blackjack', '♠ Blackjack'],
+            ] as const
+          ).map(([g, label]) => (
+            <button
+              key={g ?? 'all'}
+              onClick={() => {
+                setGame(g);
+              }}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                game === g
+                  ? 'bg-casino-gold text-black'
+                  : 'border border-casino-border text-casino-muted'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {isLoading && <p className="animate-pulse text-casino-muted">Cargando ranking…</p>}
       {isError && (

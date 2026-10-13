@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/useAuth';
 import { BalanceBadge } from '@/features/wallet/Balance';
+import { useUiStore } from '@/lib/uiStore';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -12,6 +13,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 export function AppShell() {
   const { profile, signOut } = useAuth();
   const isAdmin = profile?.is_admin ?? false;
+  const { muted, toggleMuted } = useUiStore();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -36,6 +38,14 @@ export function AppShell() {
           </nav>
           <div className="flex items-center gap-3">
             <BalanceBadge />
+            <button
+              onClick={toggleMuted}
+              aria-label={muted ? 'Activar sonido' : 'Silenciar sonido'}
+              aria-pressed={muted}
+              className="rounded-md border border-casino-border px-2.5 py-1.5 text-sm text-casino-muted transition-colors hover:text-casino-text"
+            >
+              {muted ? '🔇' : '🔊'}
+            </button>
             <span className="text-sm text-casino-muted">{profile?.username ?? '…'}</span>
             <button
               onClick={() => void signOut()}

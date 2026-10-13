@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { useAuth } from '@/features/auth/useAuth';
 import { useConfig } from '@/lib/useConfig';
+import { playDice, playLose, playWin } from '@/lib/sounds';
 
 import { Card } from './Card';
 import { Dice } from './Dice';
+import { ChipsBurst } from './ChipsBurst';
 import { BlackjackPanel } from './BlackjackPanel';
 import { useCancelRound, useRollRound, type Round, type RoundPlayer } from './useRound';
 
@@ -26,12 +28,21 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
   const { data: config } = useConfig();
   const houseFeePct = config?.get('house_fee_percent') ?? 4;
   const isPoker = game === 'poker';
+  const round = data.round;
+
+  // Sonido + animación al terminar la ronda (hooks antes de cualquier return)
+  const playedSound = useRef<string | null>(null);
+  useEffect(() => {
+    if (!round || round.status !== 'finished' || playedSound.current === round.id) return;
+    playedSound.current = round.id;
+    if (round.winner_id === user?.id) playWin();
+    else playLose();
+  }, [round, user?.id]);
+  const iJustWon = !!round && round.status === 'finished' && round.winner_id === user?.id;
 
   if (game === 'blackjack') {
     return <BlackjackPanel tableId={tableId} data={data} seated={seated} />;
   }
-
-  const round = data.round;
   if (!round) return null;
 
   const players = data.players;
@@ -69,9 +80,10 @@ export function RoundPanel({ tableId, game, data, seated }: Props) {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-4 rounded-lg border border-casino-green/50 bg-casino-green/10 p-4"
+            className="relative mt-4 overflow-hidden rounded-lg border border-casino-green/50 bg-casino-green/10 p-4"
             role="status"
           >
+            {iJustWon && <ChipsBurst />}
             {round.winner_id === user?.id ? (
               <p className="font-semibold text-casino-green">
                 🏆 ¡Has ganado {prize.toLocaleString('es')} fichas!
@@ -188,6 +200,7 @@ function RollButton({
     <>
       <button
         onClick={() => {
+          playDice();
           roll.mutate(roundId);
         }}
         disabled={roll.isPending}

@@ -1,10 +1,14 @@
+import { useEffect, useRef } from 'react';
+
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { useAuth } from '@/features/auth/useAuth';
 import { useWallet } from '@/features/wallet/useWallet';
+import { playCard, playLose, playWin } from '@/lib/sounds';
 
 import { cardRank, describeHand, handValue, RESULT_LABELS } from './blackjack';
 import { Card } from './Card';
+import { ChipsBurst } from './ChipsBurst';
 import { useBlackjackAction, type Round, type RoundPlayer } from './useRound';
 
 type BjAction = 'hit' | 'stand' | 'double' | 'insurance' | 'split';
@@ -22,6 +26,17 @@ export function BlackjackPanel({ tableId, data, seated }: Props) {
   const action = useBlackjackAction(tableId);
 
   const round = data.round;
+
+  // Sonidos al liquidar la mano (una vez por ronda)
+  const playedSound = useRef<string | null>(null);
+  useEffect(() => {
+    if (!round || round.status !== 'finished' || playedSound.current === round.id) return;
+    playedSound.current = round.id;
+    const mine = data.players.filter((p) => p.user_id === user?.id);
+    if (mine.some((h) => h.result === 'win' || h.result === 'blackjack')) playWin();
+    else if (mine.some((h) => h.result === 'loss')) playLose();
+  }, [round, data.players, user?.id]);
+
   if (!round) return null;
 
   const players = data.players;
@@ -58,6 +73,7 @@ export function BlackjackPanel({ tableId, data, seated }: Props) {
     (wallet?.balance ?? 0) >= myHands[0].bet_amount;
 
   const act = (a: BjAction, hand?: number) => {
+    if (a === 'hit') playCard();
     action.mutate({ roundId: round.id, action: a, hand });
   };
 
@@ -99,8 +115,9 @@ export function BlackjackPanel({ tableId, data, seated }: Props) {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             role="status"
-            className="mt-4 flex flex-col gap-2"
+            className="relative mt-4 flex flex-col gap-2 overflow-hidden"
           >
+            {myHands.some((h) => h.result === 'win' || h.result === 'blackjack') && <ChipsBurst />}
             {myHands.map((h) => (
               <div
                 key={h.hand_no}
