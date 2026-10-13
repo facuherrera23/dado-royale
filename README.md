@@ -1,5 +1,7 @@
 # 🎲 Dado Royale
 
+**En vivo:** <https://facuherrera23.github.io/dado-royale/> · **Repo:** <https://github.com/facuherrera23/dado-royale>
+
 Juego web de **dados multijugador con apuestas entre jugadores usando fichas virtuales** (sin dinero real ni pasarelas de pago).
 
 ## Arquitectura
