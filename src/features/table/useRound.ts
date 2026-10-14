@@ -21,23 +21,31 @@ export function useCurrentRound(tableId: string | undefined) {
     queryKey: [ROUND_KEY, tableId],
     enabled: !!tableId,
     queryFn: async () => {
+      // Traemos las 2 últimas rondas: la activa (si hay) y, al terminar,
+      // la recién cerrada para enseñar el resultado durante ~60s.
       const { data: rounds, error } = await supabase
         .from('rounds')
         .select('*')
         .eq('table_id', tableId ?? '')
-        .in('status', ['waiting', 'in_progress'])
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(2);
       if (error) throw error;
-      const round = rounds.at(0) ?? null;
-      if (!round) return { round: null, players: [] as RoundPlayer[] };
+
+      const active = rounds.find((r) => r.status === 'waiting' || r.status === 'in_progress');
+      let show = active ?? null;
+      if (!show && rounds[0]) {
+        const closed = rounds[0];
+        const finishedAt = closed.finished_at ? new Date(closed.finished_at).getTime() : 0;
+        if (Date.now() - finishedAt < 60_000) show = closed;
+      }
+      if (!show) return { round: null, players: [] as RoundPlayer[] };
 
       const { data: players, error: e2 } = await supabase
         .from('round_players')
         .select('*, profiles(username, avatar_url)')
-        .eq('round_id', round.id);
+        .eq('round_id', show.id);
       if (e2) throw e2;
-      return { round, players };
+      return { round: show, players };
     },
   });
 

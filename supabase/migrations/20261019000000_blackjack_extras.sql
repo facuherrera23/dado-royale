@@ -101,6 +101,8 @@ begin
     on conflict (idempotency_key) do nothing;
     update public.round_players set insurance = v_ins
      where round_id = p_round_id and user_id = v_uid and hand_no = 1;
+    perform public.log_round_event(p_round_id, 'insurance',
+      jsonb_build_object('user_id', v_uid, 'insurance', v_ins));
     return jsonb_build_object('round_id', p_round_id, 'status', 'insured', 'insurance', v_ins);
   end if;
 
@@ -147,6 +149,7 @@ begin
      where round_id = p_round_id and user_id = v_uid and hand_no = 2;
 
     update public.rounds set pot = pot + v_my.bet_amount where id = p_round_id;
+    perform public.log_round_event(p_round_id, 'split', jsonb_build_object('user_id', v_uid));
     return jsonb_build_object('round_id', p_round_id, 'status', 'split');
   end if;
 
@@ -190,9 +193,13 @@ begin
       update public.round_players set stood = true
        where round_id = p_round_id and user_id = v_uid and hand_no = p_hand;
     end if;
+    perform public.log_round_event(p_round_id, 'bj_double',
+      jsonb_build_object('user_id', v_uid, 'hand_no', p_hand));
   elsif p_action = 'hit' then
     update public.round_players set cards = cards || public.draw_card(p_round_id)
      where round_id = p_round_id and user_id = v_uid and hand_no = p_hand;
+    perform public.log_round_event(p_round_id, 'bj_hit',
+      jsonb_build_object('user_id', v_uid, 'hand_no', p_hand));
     if (select public.hand_value(cards) from public.round_players
          where round_id = p_round_id and user_id = v_uid and hand_no = p_hand) > 21 then
       update public.round_players set stood = true, result = 'loss'
@@ -201,6 +208,8 @@ begin
   else
     update public.round_players set stood = true
      where round_id = p_round_id and user_id = v_uid and hand_no = p_hand;
+    perform public.log_round_event(p_round_id, 'bj_stand',
+      jsonb_build_object('user_id', v_uid, 'hand_no', p_hand));
   end if;
 
   -- --------------------------------------------------------------
@@ -321,6 +330,8 @@ begin
 
   update public.rounds set status = 'finished', finished_at = now() where id = p_round_id;
   update public.tables set status = 'open' where id = v_round.table_id;
+  perform public.log_round_event(p_round_id, 'settled',
+    jsonb_build_object('dealer_cards', to_jsonb(v_dealer_cards), 'dealer_value', v_dealer_value));
   return jsonb_build_object('round_id', p_round_id, 'status', 'finished');
 end;
 $$;

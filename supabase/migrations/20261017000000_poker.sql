@@ -169,6 +169,10 @@ begin
        set card2 = public.draw_card(p_round_id),
            tiebreak_attempts = v_round.tiebreak_round
      where round_id = p_round_id and user_id = v_uid and card2 is null;
+    perform public.log_round_event(p_round_id, 'dealt',
+      (select jsonb_build_object('user_id', v_uid, 'card1', rp.card1, 'card2', rp.card2)
+         from public.round_players rp
+        where rp.round_id = p_round_id and rp.user_id = v_uid));
 
     select not exists (select 1 from public.round_players
                        where round_id = p_round_id and card1 is null)
@@ -179,6 +183,12 @@ begin
            dice2 = public.roll_d6(),
            tiebreak_attempts = v_round.tiebreak_round
      where round_id = p_round_id and user_id = v_uid and dice1 is null;
+    if found then
+      perform public.log_round_event(p_round_id, 'rolled',
+        (select jsonb_build_object('user_id', v_uid, 'dice1', rp.dice1, 'dice2', rp.dice2)
+           from public.round_players rp
+          where rp.round_id = p_round_id and rp.user_id = v_uid));
+    end if;
 
     select not exists (select 1 from public.round_players
                        where round_id = p_round_id and dice1 is null)
@@ -256,6 +266,9 @@ begin
     update public.round_players set is_winner = true
      where round_id = p_round_id and user_id = v_winner;
     update public.tables set status = 'open' where id = v_round.table_id;
+
+    perform public.log_round_event(p_round_id, 'finished',
+      jsonb_build_object('winner_id', v_winner, 'pot', v_round.pot, 'house_fee', v_fee));
 
     return jsonb_build_object('round_id', p_round_id, 'status', 'finished',
                               'winner_id', v_winner, 'pot', v_round.pot,

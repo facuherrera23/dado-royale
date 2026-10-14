@@ -28,6 +28,27 @@ export type Database = {
   };
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          description: string;
+          icon: string;
+          key: string;
+          name: string;
+        };
+        Insert: {
+          description: string;
+          icon?: string;
+          key: string;
+          name: string;
+        };
+        Update: {
+          description?: string;
+          icon?: string;
+          key?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
       config: {
         Row: {
           description: string | null;
@@ -138,6 +159,7 @@ export type Database = {
           id: number;
           idempotency_key: string | null;
           round_id: string | null;
+          tournament_id: string | null;
           type: Database['public']['Enums']['ledger_type'];
           user_id: string | null;
         };
@@ -148,6 +170,7 @@ export type Database = {
           id?: never;
           idempotency_key?: string | null;
           round_id?: string | null;
+          tournament_id?: string | null;
           type: Database['public']['Enums']['ledger_type'];
           user_id?: string | null;
         };
@@ -158,6 +181,7 @@ export type Database = {
           id?: never;
           idempotency_key?: string | null;
           round_id?: string | null;
+          tournament_id?: string | null;
           type?: Database['public']['Enums']['ledger_type'];
           user_id?: string | null;
         };
@@ -167,6 +191,13 @@ export type Database = {
             columns: ['round_id'];
             isOneToOne: false;
             referencedRelation: 'rounds';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ledger_tournament_id_fkey';
+            columns: ['tournament_id'];
+            isOneToOne: false;
+            referencedRelation: 'tournaments';
             referencedColumns: ['id'];
           },
           {
@@ -241,6 +272,41 @@ export type Database = {
             foreignKeyName: 'round_dealer_holes_round_id_fkey';
             columns: ['round_id'];
             isOneToOne: true;
+            referencedRelation: 'rounds';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      round_events: {
+        Row: {
+          created_at: string;
+          event_type: string;
+          id: number;
+          payload: Json;
+          round_id: string;
+          seq: number;
+        };
+        Insert: {
+          created_at?: string;
+          event_type: string;
+          id?: never;
+          payload: Json;
+          round_id: string;
+          seq: number;
+        };
+        Update: {
+          created_at?: string;
+          event_type?: string;
+          id?: never;
+          payload?: Json;
+          round_id?: string;
+          seq?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'round_events_round_id_fkey';
+            columns: ['round_id'];
+            isOneToOne: false;
             referencedRelation: 'rounds';
             referencedColumns: ['id'];
           },
@@ -405,6 +471,45 @@ export type Database = {
           },
         ];
       };
+      table_messages: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: number;
+          table_id: string;
+          user_id: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: never;
+          table_id: string;
+          user_id: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: never;
+          table_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'table_messages_table_id_fkey';
+            columns: ['table_id'];
+            isOneToOne: false;
+            referencedRelation: 'tables';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'table_messages_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       table_players: {
         Row: {
           joined_at: string;
@@ -483,6 +588,108 @@ export type Database = {
         };
         Relationships: [];
       };
+      tournament_players: {
+        Row: {
+          joined_at: string;
+          tournament_id: string;
+          user_id: string;
+        };
+        Insert: {
+          joined_at?: string;
+          tournament_id: string;
+          user_id: string;
+        };
+        Update: {
+          joined_at?: string;
+          tournament_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'tournament_players_tournament_id_fkey';
+            columns: ['tournament_id'];
+            isOneToOne: false;
+            referencedRelation: 'tournaments';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'tournament_players_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      tournaments: {
+        Row: {
+          buy_in: number;
+          created_at: string;
+          ends_at: string;
+          game: string;
+          id: string;
+          min_players: number;
+          name: string;
+          starts_at: string;
+          status: string;
+        };
+        Insert: {
+          buy_in: number;
+          created_at?: string;
+          ends_at: string;
+          game: string;
+          id?: string;
+          min_players?: number;
+          name: string;
+          starts_at: string;
+          status?: string;
+        };
+        Update: {
+          buy_in?: number;
+          created_at?: string;
+          ends_at?: string;
+          game?: string;
+          id?: string;
+          min_players?: number;
+          name?: string;
+          starts_at?: string;
+          status?: string;
+        };
+        Relationships: [];
+      };
+      user_achievements: {
+        Row: {
+          achievement_key: string;
+          earned_at: string;
+          user_id: string;
+        };
+        Insert: {
+          achievement_key: string;
+          earned_at?: string;
+          user_id: string;
+        };
+        Update: {
+          achievement_key?: string;
+          earned_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_achievements_achievement_key_fkey';
+            columns: ['achievement_key'];
+            isOneToOne: false;
+            referencedRelation: 'achievements';
+            referencedColumns: ['key'];
+          },
+          {
+            foreignKeyName: 'user_achievements_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       wallets: {
         Row: {
           balance: number;
@@ -517,6 +724,7 @@ export type Database = {
       _roll_round_dice_poker: { Args: { p_round_id: string }; Returns: Json };
       _roll_round_war: { Args: { p_round_id: string }; Returns: Json };
       _uniform: { Args: { p_max: number }; Returns: number };
+      admin_detect_patterns: { Args: never; Returns: Json };
       bj_action: {
         Args: { p_action: string; p_hand?: number; p_round_id: string };
         Returns: Json;
@@ -525,9 +733,12 @@ export type Database = {
       cancel_stale_rounds: { Args: never; Returns: number };
       card_rank: { Args: { p_card: number }; Returns: number };
       card_value: { Args: { p_card: number }; Returns: number };
+      check_achievements: { Args: never; Returns: Json };
       claim_faucet: { Args: never; Returns: Json };
       config_int: { Args: { p_key: string }; Returns: number };
       draw_card: { Args: { p_round: string }; Returns: number };
+      finalize_due_tournaments: { Args: never; Returns: number };
+      finalize_tournament: { Args: { p_tournament_id: string }; Returns: Json };
       get_admin_stats: { Args: never; Returns: Json };
       get_leaderboard: {
         Args: { p_game?: string; p_limit?: number };
@@ -538,12 +749,25 @@ export type Database = {
         }[];
       };
       get_my_stats: { Args: never; Returns: Json };
+      get_tournament_standings: {
+        Args: { p_tournament_id: string };
+        Returns: {
+          net: number;
+          username: string;
+          won: number;
+        }[];
+      };
       hand_score: { Args: { p_c1: number; p_c2: number }; Returns: number };
       hand_value: { Args: { p_cards: number[] }; Returns: number };
       is_admin: { Args: { p_uid?: string }; Returns: boolean };
       is_blackjack: { Args: { p_cards: number[] }; Returns: boolean };
       join_table: { Args: { p_table_id: string }; Returns: Json };
       leave_table: { Args: { p_table_id: string }; Returns: Json };
+      log_round_event: {
+        Args: { p_payload: Json; p_round_id: string; p_type: string };
+        Returns: undefined;
+      };
+      register_tournament: { Args: { p_tournament_id: string }; Returns: Json };
       review_kyc: {
         Args: { p_approve: boolean; p_reason?: string; p_submission: string };
         Returns: Json;
@@ -552,6 +776,10 @@ export type Database = {
       roll_round: { Args: { p_round_id: string }; Returns: Json };
       rps_play: {
         Args: { p_choice: number; p_round_id: string };
+        Returns: Json;
+      };
+      send_table_message: {
+        Args: { p_body: string; p_table_id: string };
         Returns: Json;
       };
       set_bet: { Args: { p_amount: number; p_table_id: string }; Returns: Json };
@@ -577,7 +805,9 @@ export type Database = {
         | 'refund'
         | 'house_fee'
         | 'adjustment'
-        | 'house_settlement';
+        | 'house_settlement'
+        | 'buy_in'
+        | 'prize';
       round_status: 'waiting' | 'in_progress' | 'finished' | 'cancelled';
       table_player_status: 'seated' | 'left';
       table_status: 'open' | 'in_round' | 'closed';
@@ -713,6 +943,8 @@ export const Constants = {
         'house_fee',
         'adjustment',
         'house_settlement',
+        'buy_in',
+        'prize',
       ],
       round_status: ['waiting', 'in_progress', 'finished', 'cancelled'],
       table_player_status: ['seated', 'left'],

@@ -32,6 +32,12 @@ const ProfilePage = lazy(async () => ({
 const KycPage = lazy(async () => ({
   default: (await import('@/features/profile/KycPage')).KycPage,
 }));
+const TournamentsPage = lazy(async () => ({
+  default: (await import('@/features/tournaments/TournamentsPage')).TournamentsPage,
+}));
+const ReplayPage = lazy(async () => ({
+  default: (await import('@/features/table/ReplayPage')).ReplayPage,
+}));
 
 function PageFallback() {
   return (
@@ -78,6 +84,8 @@ export function App() {
                   <Route path="/mesa/:id" element={<TablePage />} />
                   <Route path="/wallet" element={<WalletPage />} />
                   <Route path="/ranking" element={<RankingPage />} />
+                  <Route path="/torneos" element={<TournamentsPage />} />
+                  <Route path="/replay/:id" element={<ReplayPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
               </Route>

@@ -6,6 +6,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/lib/supabaseClient';
 
 import { KycQueue } from './KycQueue';
+import { FraudPanel } from './FraudPanel';
 
 const adminStatsSchema = z.object({
   house_balance: z.number(),
@@ -79,6 +80,7 @@ export function AdminPage() {
       <h1 className="text-2xl font-bold">🛡️ Administración</h1>
 
       <KycQueue />
+      <FraudPanel />
 
       {stats.data && (
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -9,6 +9,7 @@ import { Avatar } from '@/components/Avatar';
 import { AVATARS } from '@/lib/avatars';
 
 import { StatsSection } from './StatsSection';
+import { AchievementsSection } from './AchievementsSection';
 
 /** Perfil: avatar editable (emoji), nombre y estadísticas rápidas. */
 export function ProfilePage() {
@@ -86,6 +87,7 @@ export function ProfilePage() {
       </section>
 
       <StatsSection />
+      <AchievementsSection />
 
       <section className="rounded-xl border border-casino-border bg-casino-surface p-6">
         <h2 className="text-lg font-semibold">Verificación de identidad</h2>

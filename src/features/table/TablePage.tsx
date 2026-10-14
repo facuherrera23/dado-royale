@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/useAuth';
 import { useLeaveTable, useTablePlayers, useTables } from '@/features/lobby/useTables';
@@ -8,6 +8,8 @@ import { Avatar } from '@/components/Avatar';
 
 import { RoundPanel } from './RoundPanel';
 import { BetSetter } from './BetSetter';
+import { ChatPanel } from './ChatPanel';
+import { useSeatNotifications } from './useTableNotifications';
 import { useCurrentRound, useRoundHistory, useStartRound } from './useRound';
 
 /**
@@ -18,6 +20,7 @@ export function TablePage() {
   const { id: tableId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  useSeatNotifications(tableId);
   const { data: tables } = useTables();
   const { data: players, isLoading } = useTablePlayers(tableId);
   const { data: roundData, isLoading: loadingRound } = useCurrentRound(tableId);
@@ -179,6 +182,29 @@ export function TablePage() {
             )}
           </div>
         </section>
+      )}
+
+      {/* Chat + spectator indicator */}
+      {tableId && table && (
+        <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+          <ChatPanel tableId={tableId} seated={seated} />
+          <div className="rounded-xl border border-casino-border bg-casino-surface p-4 text-sm text-casino-muted">
+            <p className="font-semibold text-casino-text">👀 Espectadores</p>
+            <p className="mt-2">
+              {seated
+                ? '⚔️ Estás jugando.'
+                : '👀 Estás viendo esta mesa como espectador (no juegas ni apuestas).'}
+            </p>
+            {history && history.length > 0 && (
+              <Link
+                to={`/replay/${history[0].id}`}
+                className="mt-3 inline-block text-casino-gold underline"
+              >
+                🔁 Ver replay de la última ronda
+              </Link>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Historial de la mesa */}

@@ -45,19 +45,22 @@ El `.env` por defecto apunta al stack local (claves públicas del stack de desar
 
 ## Scripts
 
-| Comando                 | Descripción                      |
-| ----------------------- | -------------------------------- |
-| `npm run dev`           | Servidor de desarrollo           |
-| `npm run build`         | Typecheck + build de producción  |
-| `npm run lint`          | ESLint (strictTypeChecked)       |
-| `npm run format`        | Prettier                         |
-| `npm test`              | Vitest (frontend)                |
-| `npx supabase test db`  | Tests SQL (pgTAP): 61 aserciones |
-| `npx supabase db reset` | Resetea y repuebla la BD local   |
+| Comando                 | Descripción                       |
+| ----------------------- | --------------------------------- |
+| `npm run dev`           | Servidor de desarrollo            |
+| `npm run build`         | Typecheck + build de producción   |
+| `npm run lint`          | ESLint (strictTypeChecked)        |
+| `npm run format`        | Prettier                          |
+| `npm test`              | Vitest (frontend)                 |
+| `npx playwright test`   | E2E (2 navegadores, partida real) |
+| `npx supabase test db`  | Tests SQL (pgTAP): 157 aserciones |
+| `npx supabase db reset` | Resetea y repuebla la BD local    |
 
 ## Reglas del juego (motor SQL)
 
 **Cinco juegos:** 🎲 Dados (2d6), 🃏 Póker de 2 cartas, ♠ Blackjack (21 vs la banca), 🗡️ Guerra de cartas (1 carta, gana la más alta) y ✊ Piedra-Papel-Tijera (elección secreta en tabla oculta, piedra>tijeras>papel>piedra). Todos comparten pozo, comisión del 4% (PvP), desempates y reembolsos; blackjack no tiene comisión (la banca cobra las perdedoras).
+
+**Social/Épico:** 🏆 **Torneos semanales** por juego (buy-in, pozo repartido 50/30/20 al top-3, cron de finalización), 💬 **chat en vivo** en cada mesa (RLS: escriben solo sentados), 👀 **modo espectador** con presencia en vivo, 🔁 **replay de rondas** (`round_events` secuenciado escrito por los motores), 🏅 **7 logros** desbloqueables (primera victoria, natural 21, seis dobles…), 🔔 **notificaciones en tiempo real** (toasts al cobrar/reembolsar/premio y cuando alguien entra a tu mesa), 🕵️ **panel antifraude** para admin (documentos repetidos, winrate anómalo en parejas, farming de faucet).
 
 - **Dados:** 2d6 por jugador, generados en el servidor con `pgcrypto.gen_random_bytes` y **rejection sampling sin sesgo**. Nunca `random()`, nunca en el cliente.
 - **Póker 2 cartas:** baraja única de 52 por ronda (`draw_card` con muestreo uniforme criptográfico, **sin repetición**). Victoria: pareja > carta alta, con kicker (`hand_score`). Los empatados reciben cartas nuevas.
@@ -96,6 +99,9 @@ Config ajustable sin código en la tabla `config`: `house_fee_percent`, `faucet_
    npx supabase link --project-ref cjalkhrmuxndrozcwcmo # pidió la DB password
    npx supabase db push                                 # aplica supabase/migrations/*
    ```
+   En GitHub Actions: el workflow `db-deploy.yml` lo hace automáticamente al pushear
+   cambios en `supabase/migrations/`, usando los secrets `SUPABASE_ACCESS_TOKEN` y
+   `SUPABASE_DB_PASSWORD`.
 3. **GitHub Secrets** (Settings → Secrets and variables → Actions):
    - `VITE_SUPABASE_URL` = `https://cjalkhrmuxndrozcwcmo.supabase.co`
    - `VITE_SUPABASE_ANON_KEY` = la anon key del proyecto

@@ -76,6 +76,12 @@ begin
      set card1 = public.draw_card(p_round_id),
          tiebreak_attempts = v_round.tiebreak_round
    where round_id = p_round_id and user_id = v_uid and hand_no = 1 and card1 is null;
+  if found then
+    perform public.log_round_event(p_round_id, 'war_draw',
+      (select jsonb_build_object('user_id', v_uid, 'card', rp.card1)
+         from public.round_players rp
+        where rp.round_id = p_round_id and rp.user_id = v_uid and rp.hand_no = 1));
+  end if;
 
   select not exists (select 1 from public.round_players
                      where round_id = p_round_id and card1 is null)
@@ -129,8 +135,10 @@ begin
        set status = 'finished', winner_id = v_winners[1], house_fee = v_fee, finished_at = now()
      where id = p_round_id;
     update public.round_players set is_winner = true
-     where round_id = p_round_id and user_id = v_winners[1];
+     where round_id = p_round_id and user_id = v_winners[1] and hand_no = 1;
     update public.tables set status = 'open' where id = v_round.table_id;
+    perform public.log_round_event(p_round_id, 'finished',
+      jsonb_build_object('winner_id', v_winners[1], 'pot', v_round.pot, 'house_fee', v_fee));
     return jsonb_build_object('round_id', p_round_id, 'status', 'finished',
                               'winner_id', v_winners[1], 'pot', v_round.pot,
                               'house_fee', v_fee, 'prize', v_prize);
@@ -190,6 +198,8 @@ begin
   insert into public.round_rps_choices (round_id, user_id, choice, tiebreak_no)
   values (p_round_id, v_uid, p_choice, v_round.tiebreak_round)
   on conflict (round_id, user_id, tiebreak_no) do nothing;
+  perform public.log_round_event(p_round_id, 'rps_choice',
+    jsonb_build_object('user_id', v_uid, 'choice', p_choice));
 
   select not exists (
     select 1 from public.round_players rp
@@ -263,6 +273,8 @@ begin
      where round_id = p_round_id and user_id = v_winners[1];
     delete from public.round_rps_choices where round_id = p_round_id;
     update public.tables set status = 'open' where id = v_round.table_id;
+    perform public.log_round_event(p_round_id, 'finished',
+      jsonb_build_object('winner_id', v_winners[1], 'pot', v_round.pot, 'house_fee', v_fee));
     return jsonb_build_object('round_id', p_round_id, 'status', 'finished',
                               'winner_id', v_winners[1], 'pot', v_round.pot,
                               'house_fee', v_fee, 'prize', v_prize);

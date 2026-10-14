@@ -1,9 +1,11 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 
 import { Avatar } from '@/components/Avatar';
+import { Toaster } from '@/components/Toaster';
 import { useAuth } from '@/features/auth/useAuth';
 import { BalanceBadge } from '@/features/wallet/Balance';
 import { syncAmbient } from '@/lib/sounds';
+import { useGlobalToasts } from '@/lib/useGlobalToasts';
 import { useUiStore } from '@/lib/uiStore';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -16,6 +18,7 @@ export function AppShell() {
   const { profile, signOut } = useAuth();
   const isAdmin = profile?.is_admin ?? false;
   const { muted, ambient, toggleMuted, toggleAmbient } = useUiStore();
+  useGlobalToasts();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -31,6 +34,9 @@ export function AppShell() {
             </NavLink>
             <NavLink to="/ranking" className={linkClass}>
               Ranking
+            </NavLink>
+            <NavLink to="/torneos" className={linkClass}>
+              Torneos
             </NavLink>
             {isAdmin && (
               <NavLink to="/admin" className={linkClass}>
@@ -84,6 +90,7 @@ export function AppShell() {
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
         <Outlet />
       </div>
+      <Toaster />
       <footer className="border-t border-casino-border py-4 text-center text-xs text-casino-muted">
         Las fichas son virtuales y sin valor monetario · Solo mayores de 18 años ·{' '}
         <Link to="/terminos" className="underline hover:text-casino-text">

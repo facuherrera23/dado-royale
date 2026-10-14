@@ -154,6 +154,8 @@ begin
     update public.table_players set pending_bet = null
      where table_id = p_table_id;
     update public.tables set status = 'in_round' where id = p_table_id;
+    perform public.log_round_event(v_round_id, 'round_started',
+      jsonb_build_object('pot', v_pot, 'players', v_seated, 'game', 'blackjack'));
     return jsonb_build_object('round_id', v_round_id, 'pot', v_pot, 'players', v_seated);
   end if;
 
@@ -196,6 +198,8 @@ begin
 
   update public.rounds set pot = v_pot where id = v_round_id;
   update public.tables set status = 'in_round' where id = p_table_id;
+  perform public.log_round_event(v_round_id, 'round_started',
+    jsonb_build_object('pot', v_pot, 'players', v_seated, 'game', v_table.game));
   return jsonb_build_object('round_id', v_round_id, 'pot', v_pot, 'players', v_seated);
 end;
 $$;

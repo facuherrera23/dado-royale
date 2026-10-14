@@ -33,3 +33,8 @@ dist-ssr
 supabase/.branches
 supabase/.temp
 
+
+e2e-results
+playwright-report
+test-results
+

@@ -45,6 +45,7 @@ export function useTables() {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'table_players' }, () => {
         void queryClient.invalidateQueries({ queryKey: [TABLES_KEY] });
+        void queryClient.invalidateQueries({ queryKey: ['my-seat'] });
       })
       .subscribe();
     return () => {
@@ -130,9 +131,10 @@ export function useLeaveTable() {
 /** ¿En qué mesa está sentado el usuario actual (si alguna)? */
 export function useMySeat() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
-  const query = useQuery({
+  // El refresco en vivo lo hace el canal 'lobby' (useTables) que invalida
+  // tanto la lista de mesas como ['my-seat', user.id] en un único canal.
+  return useQuery({
     queryKey: ['my-seat', user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -147,23 +149,4 @@ export function useMySeat() {
       return data?.table_id ?? null;
     },
   });
-
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase
-      .channel(`my-seat-${user.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'table_players', filter: `user_id=eq.${user.id}` },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: ['my-seat', user.id] });
-        },
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [user, queryClient]);
-
-  return query;
 }
